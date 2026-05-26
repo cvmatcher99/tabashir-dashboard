@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<meta name="theme-color" content="#080b12"/>
+<title>Tabashir Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg:      #080b12;
+  --surface: #0f1320;
+  --surface2:#161c2e;
+  --border:  #1a2236;
+  --border-hi:#253352;
+  --accent:  #3b82f6;
+  --accent2: #10b981;
+  --accent3: #f59e0b;
+  --accent4: #8b5cf6;
+  --text:    #f0f2f8;
+  --text-sec:#c9cfe0;
+  --muted:   #5c6a8a;
+  --danger:  #ef4444;
+  --r:       10px;
+  --nav-h:   62px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-tap-highlight-color: transparent; }
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background: var(--bg); color: var(--text);
+  min-height: 100dvh; min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── SIDEBAR ── */
+.sidebar {
+  display: none;
+  width: 240px; background: var(--surface);
+  border-right: 1px solid var(--border);
+  flex-direction: column; padding: 0;
+  position: fixed; top: 0; left: 0; height: 100vh; z-index: 200;
+}
+.logo {
+  padding: 24px 24px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 12px;
+}
+.logo-mark {
+  width: 36px; height: 36px; border-radius: 9px;
+  background: linear-gradient(135deg, var(--accent), #2563eb);
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 3px 10px rgba(59,130,246,.25);
+}
+.logo-mark svg { width: 18px; height: 18px; color: #fff; }
+.logo-text h1 { font-size: 17px; font-weight: 700; color: var(--text); letter-spacing: -.2px; line-height: 1; }
+.logo-text p  { font-size: 11px; color: var(--muted); margin-top: 3px; font-weight: 500; }
+
+.nav { padding: 16px 12px; flex: 1; }
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; cursor: pointer;
+  border-radius: 8px;
+  color: var(--muted); font-size: 13px; font-weight: 500;
+  transition: all .18s;
+  user-select: none;
+  margin-bottom: 2px;
+}
+.nav-item:hover {
+  color: var(--text-sec); background: rgba(59,130,246,.04);
+}
+.nav-item.active {
+  color: var(--text); background: rgba(59,130,246,.08);
+  box-shadow: inset 0 0 0 1px rgba(59,130,246,.12);
+}
+.nav-item svg { width: 18px; height: 18px; flex-shrink: 0; opacity: .7; }
+.nav-item.active svg { opacity: 1; }
+
+.sidebar-footer {
+  padding: 16px 16px 20px;
+  border-top: 1px solid var(--border);
+  font-size: 11px; color: var(--muted); line-height: 1.6;
+}
+.sidebar-footer span { color: var(--accent); font-weight: 600; }
+.btn-signout {
+  width: 100%; padding: 9px; margin-top: 10px;
+  background: rgba(239,68,68,.06);
+  border: 1px solid rgba(239,68,68,.12);
+  border-radius: 8px; color: #f87171;
+  font-size: 12px; font-weight: 500; font-family: inherit;
+  cursor: pointer; transition: all .18s;
+}
+.btn-signout:hover { background: rgba(239,68,68,.1); border-color: rgba(239,68,68,.2); }
+
+/* ── MAIN ── */
+.main {
+  padding: 20px 16px calc(var(--nav-h) + 16px);
+  min-height: 100vh;
+}
+
+/* ── TOP BAR ── */
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 24px; gap: 10px;
+}
+.topbar-left h2 { font-size: 20px; font-weight: 700; letter-spacing: -.3px; }
+.topbar-left p { font-size: 12px; color: var(--muted); margin-top: 2px; font-weight: 500; }
+.topbar-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.btn-refresh {
+  display: flex; align-items: center; justify-content: center;
+  width: 38px; height: 38px; border-radius: 9px;
+  border: 1px solid var(--border); background: var(--surface);
+  color: var(--muted); cursor: pointer; font-size: 17px;
+  transition: all .18s; font-family: inherit;
+}
+.btn-refresh:hover { background: var(--surface2); color: var(--text); border-color: var(--border-hi); }
+.loading-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 14px; background: rgba(59,130,246,.06);
+  border: 1px solid rgba(59,130,246,.1);
+  border-radius: 20px; font-size: 12px; color: var(--accent); font-weight: 500;
+}
+.dot { width:6px; height:6px; border-radius:50%; background:var(--accent); animation: pulse 1.2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.25} }
+
+/* ── CARDS ── */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px; margin-bottom: 24px;
+}
+.card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 16px 18px;
+  transition: border-color .18s;
+}
+.card:hover { border-color: var(--border-hi); }
+.card-icon {
+  width: 34px; height: 34px; margin-bottom: 12px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+}
+.card-icon svg { width: 16px; height: 16px; }
+.c1 .card-icon { background: rgba(59,130,246,.1); color: var(--accent); }
+.c2 .card-icon { background: rgba(16,185,129,.1); color: var(--accent2); }
+.c3 .card-icon { background: rgba(245,158,11,.1); color: var(--accent3); }
+.c4 .card-icon { background: rgba(139,92,246,.1); color: var(--accent4); }
+.c5 .card-icon { background: rgba(59,130,246,.1); color: var(--accent); }
+.card-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; font-weight: 600; }
+.card-value { font-size: 28px; font-weight: 800; margin: 4px 0 3px; line-height: 1; letter-spacing: -.5px; }
+.card-sub { font-size: 11px; color: var(--muted); font-weight: 500; }
+.card-full { grid-column: 1 / -1; }
+.c1 .card-value { color: var(--accent); }
+.c2 .card-value { color: var(--accent2); }
+.c3 .card-value { color: var(--accent3); }
+.c4 .card-value { color: var(--accent4); }
+.c5 .card-value { color: var(--accent); }
+
+/* ── CHART CARDS ── */
+.chart-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 18px; margin-bottom: 12px;
+}
+.chart-title {
+  font-size: 13px; font-weight: 600; margin-bottom: 16px; color: var(--text-sec);
+  display: flex; align-items: center; gap: 8px;
+}
+.chart-title::before {
+  content: ''; width: 3px; height: 14px; border-radius: 2px;
+  background: var(--accent); flex-shrink: 0;
+}
+.chart-wrap { position: relative; height: 200px; }
+.chart-pair { display: grid; grid-template-columns: 1fr; gap: 12px; margin-bottom: 12px; }
+
+/* ── TABLE CARDS ── */
+.table-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 18px; margin-bottom: 12px;
+  overflow: hidden;
+}
+.table-title {
+  font-size: 13px; font-weight: 600; margin-bottom: 14px; color: var(--text-sec);
+  display: flex; align-items: center; gap: 8px;
+}
+.table-title::before {
+  content: ''; width: 3px; height: 14px; border-radius: 2px;
+  background: var(--accent2); flex-shrink: 0;
+}
+.table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+table { width: 100%; border-collapse: collapse; font-size: 12.5px; min-width: 380px; }
+th {
+  color: var(--muted); font-weight: 600; text-align: left;
+  padding: 8px 10px; border-bottom: 1px solid var(--border);
+  font-size: 10px; text-transform: uppercase; letter-spacing: .6px;
+  white-space: nowrap;
+}
+td {
+  padding: 10px 10px; border-bottom: 1px solid rgba(255,255,255,.03);
+  overflow: hidden; text-overflow: ellipsis; max-width: 140px; white-space: nowrap;
+  color: var(--text-sec); font-weight: 400;
+}
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: rgba(59,130,246,.03); }
+
+/* ── BADGES ── */
+.badge {
+  display: inline-block; padding: 3px 10px;
+  border-radius: 6px; font-size: 11px; font-weight: 600;
+  letter-spacing: .2px;
+}
+.badge-m { background: rgba(59,130,246,.1);  color: var(--accent); }
+.badge-f { background: rgba(16,185,129,.1); color: var(--accent2); }
+.badge-u { background: rgba(92,106,138,.1); color: var(--muted); }
+
+/* ── SEARCH ── */
+.table-card-header {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; margin-bottom: 14px; flex-wrap: wrap;
+}
+.table-card-header .table-title { margin-bottom: 0; }
+.search-wrap {
+  display: flex; align-items: center; gap: 0;
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 8px; padding: 0 12px; height: 36px;
+  flex: 1; min-width: 180px; max-width: 280px;
+  transition: border-color .18s, box-shadow .18s;
+}
+.search-wrap:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59,130,246,.08); }
+.search-icon { width: 14px; height: 14px; color: var(--muted); flex-shrink: 0; margin-right: 8px; }
+.search-wrap input {
+  flex: 1; background: none; border: none; outline: none;
+  color: var(--text); font-size: 13px; min-width: 0; font-family: inherit;
+}
+.search-wrap input::placeholder { color: var(--muted); }
+.search-clear {
+  background: none; border: none; cursor: pointer;
+  color: var(--muted); display: flex; align-items: center;
+  padding: 0; transition: color .15s;
+}
+.search-clear:hover { color: var(--text); }
+.search-clear svg { width: 13px; height: 13px; }
+.search-spinner {
+  width: 13px; height: 13px; flex-shrink: 0;
+  border: 2px solid rgba(59,130,246,.2);
+  border-top-color: var(--accent); border-radius: 50%;
+  animation: spin .65s linear infinite;
+}
+.search-status {
+  font-size: 12px; color: var(--muted); font-weight: 500;
+  padding: 4px 0 8px; margin-top: -4px;
+}
+.search-status.err { color: var(--danger); }
+
+/* ── ERROR / SPINNER ── */
+.error-box {
+  background: rgba(239,68,68,.06); border: 1px solid rgba(239,68,68,.15);
+  border-radius: 10px; padding: 14px 16px; color: var(--danger);
+  margin-bottom: 16px; font-size: 13px; font-weight: 500;
+}
+.spinner { display: flex; align-items: center; justify-content: center; height: 180px; }
+.spin {
+  width: 32px; height: 32px; border: 3px solid var(--border);
+  border-top-color: var(--accent); border-radius: 50%;
+  animation: spin .75s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── SECTIONS ── */
+.section { display: none; }
+.section.active { display: block; }
+
+/* ── BOTTOM NAV ── */
+.bottom-nav {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  height: var(--nav-h);
+  background: var(--surface); border-top: 1px solid var(--border);
+  display: flex; z-index: 200;
+  padding-bottom: env(safe-area-inset-bottom);
+  backdrop-filter: blur(12px);
+}
+.bnav-item {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 3px;
+  cursor: pointer; color: var(--muted); font-size: 10px; font-weight: 600;
+  transition: color .18s; padding: 6px 0; user-select: none;
+  letter-spacing: .2px;
+}
+.bnav-item svg { width: 20px; height: 20px; opacity: .6; }
+.bnav-item.active { color: var(--accent); }
+.bnav-item.active svg { stroke: var(--accent); opacity: 1; }
+
+/* ── DESKTOP ── */
+@media (min-width: 768px) {
+  .sidebar      { display: flex; }
+  .bottom-nav   { display: none; }
+  .main         { margin-left: 240px; padding: 32px 32px 32px; }
+  .topbar-left h2 { font-size: 24px; }
+  .cards        { grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px; margin-bottom: 28px; }
+  .card         { padding: 20px 22px; }
+  .card-icon    { width: 38px; height: 38px; } .card-icon svg { width: 18px; height: 18px; }
+  .card-value   { font-size: 32px; }
+  .card-full    { grid-column: unset; }
+  .chart-pair   { grid-template-columns: 2fr 1fr; gap: 14px; }
+  .chart-wrap   { height: 220px; }
+  .chart-card, .table-card { margin-bottom: 18px; }
+  table         { font-size: 13px; min-width: unset; }
+  td, th        { padding: 10px 14px; }
+}
+
+@media (min-width: 1100px) {
+  .chart-pair.equal { grid-template-columns: 1fr 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-mark">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+        <line x1="18" y1="20" x2="18" y2="10"/>
+        <line x1="12" y1="20" x2="12" y2="4"/>
+        <line x1="6"  y1="20" x2="6"  y2="14"/>
+      </svg>
+    </div>
+    <div class="logo-text">
+      <h1>Tabashir</h1>
+      <p>Management</p>
+    </div>
+  </div>
+  <nav class="nav" id="desktopNav">
+    <div class="nav-item active" data-sec="overview">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+        <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+      </svg>
+      Overview
+    </div>
+    <div class="nav-item" data-sec="clients">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+        <circle cx="9" cy="7" r="4"/>
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+      </svg>
+      Clients
+    </div>
+    <div class="nav-item" data-sec="jobs">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="2" y="7" width="20" height="14" rx="2"/>
+        <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
+      </svg>
+      Jobs
+    </div>
+    <div class="nav-item" data-sec="analytics">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="18" y1="20" x2="18" y2="10"/>
+        <line x1="12" y1="20" x2="12" y2="4"/>
+        <line x1="6"  y1="20" x2="6"  y2="14"/>
+      </svg>
+      Analytics
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    <div style="margin-bottom:6px">Last sync<br><span id="updatedAt">--:--</span></div>
+    <button class="btn-signout" onclick="logout()">Sign Out</button>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+
+  <div id="errorBox" class="error-box" style="display:none"></div>
+
+  <div class="topbar">
+    <div class="topbar-left">
+      <h2 id="sectionTitle">Overview</h2>
+      <p id="sectionSub">Real-time workforce metrics</p>
+    </div>
+    <div class="topbar-right">
+      <div class="loading-pill" id="loadingPill" style="display:none">
+        <div class="dot"></div> Syncing...
+      </div>
+      <button class="btn-refresh" onclick="loadData()" title="Refresh data">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
+          <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- OVERVIEW -->
+  <div id="sec-overview" class="section active">
+    <div class="cards">
+      <div class="card c1">
+        <div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+        <div class="card-label">Total Clients</div>
+        <div class="card-value" id="totalClients">&mdash;</div>
+        <div class="card-sub">all time</div>
+      </div>
+      <div class="card c2">
+        <div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+        <div class="card-label">New Today</div>
+        <div class="card-value" id="todayClients">&mdash;</div>
+        <div class="card-sub" id="todayDate">&mdash;</div>
+      </div>
+      <div class="card c3">
+        <div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14h.01M12 14h.01M16 14h.01"/></svg></div>
+        <div class="card-label">This Week</div>
+        <div class="card-value" id="weekClients">&mdash;</div>
+        <div class="card-sub">last 7 days</div>
+      </div>
+      <div class="card c4">
+        <div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14h8M8 18h5"/></svg></div>
+        <div class="card-label">This Month</div>
+        <div class="card-value" id="monthClients">&mdash;</div>
+        <div class="card-sub" id="monthName">&mdash;</div>
+      </div>
+      <div class="card c5 card-full">
+        <div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg></div>
+        <div class="card-label">Total Jobs</div>
+        <div class="card-value" id="totalJobs">&mdash;</div>
+        <div class="card-sub">in database</div>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-title">Clients Registered — Last 30 Days</div>
+      <div class="chart-wrap"><canvas id="chartPerDay"></canvas></div>
+    </div>
+
+    <div class="chart-pair">
+      <div class="chart-card">
+        <div class="chart-title">Gender Distribution</div>
+        <div class="chart-wrap"><canvas id="chartGender"></canvas></div>
+      </div>
+    </div>
+
+    <div class="table-card">
+      <div class="table-title">Latest Clients</div>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Name</th><th>Nationality</th><th>Gender</th><th>Date</th></tr></thead>
+          <tbody id="latestClientsBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="table-card">
+      <div class="table-title">Latest Jobs</div>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Title</th><th>Company</th><th>Source</th><th>Date</th></tr></thead>
+          <tbody id="latestJobsBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- CLIENTS -->
+  <div id="sec-clients" class="section">
+    <div class="chart-pair equal">
+      <div class="chart-card">
+        <div class="chart-title">Top Nationalities</div>
+        <div class="chart-wrap"><canvas id="chartNationality"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Preferred Locations</div>
+        <div class="chart-wrap"><canvas id="chartLocation"></canvas></div>
+      </div>
+    </div>
+    <div class="table-card">
+      <div class="table-card-header">
+        <div class="table-title" id="clientsTableTitle">Latest 10 Clients</div>
+        <div class="search-wrap">
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <input id="emailSearch" type="email" placeholder="Search by email..." autocomplete="off" spellcheck="false"/>
+          <button class="search-clear" id="searchClear" style="display:none">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+          <div class="search-spinner" id="searchSpinner" style="display:none"></div>
+        </div>
+      </div>
+      <div id="searchStatus" class="search-status" style="display:none"></div>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr><th>#</th><th>Name</th><th>Email</th><th>Phone</th><th>Nationality</th><th>Gender</th><th>Date</th></tr>
+          </thead>
+          <tbody id="clientsFullBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- JOBS -->
+  <div id="sec-jobs" class="section">
+    <div class="table-card">
+      <div class="table-title">Latest 10 Jobs</div>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr><th>#</th><th>Title</th><th>Company</th><th>Source</th><th>Date</th></tr>
+          </thead>
+          <tbody id="jobsFullBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ANALYTICS -->
+  <div id="sec-analytics" class="section">
+    <div class="chart-pair equal">
+      <div class="chart-card">
+        <div class="chart-title">Gender Split</div>
+        <div class="chart-wrap"><canvas id="chartGender2"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Nationalities</div>
+        <div class="chart-wrap"><canvas id="chartNationality2"></canvas></div>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Daily Registrations — Last 30 Days</div>
+      <div class="chart-wrap" style="height:240px"><canvas id="chartPerDay2"></canvas></div>
+    </div>
+  </div>
+
+</main>
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav" id="bottomNav">
+  <div class="bnav-item active" data-sec="overview">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+      <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+    </svg>
+    Overview
+  </div>
+  <div class="bnav-item" data-sec="clients">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+      <circle cx="9" cy="7" r="4"/>
+      <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+    </svg>
+    Clients
+  </div>
+  <div class="bnav-item" data-sec="jobs">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <rect x="2" y="7" width="20" height="14" rx="2"/>
+      <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
+    </svg>
+    Jobs
+  </div>
+  <div class="bnav-item" data-sec="analytics">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <line x1="18" y1="20" x2="18" y2="10"/>
+      <line x1="12" y1="20" x2="12" y2="4"/>
+      <line x1="6"  y1="20" x2="6"  y2="14"/>
+    </svg>
+    Analytics
+  </div>
+</nav>
+
+<script>
+// Auth guard
+(function authGuard() {
+  const token = localStorage.getItem('dash_token');
+  const exp   = parseInt(localStorage.getItem('dash_exp') || '0', 10);
+  if (!token || Date.now() >= exp) {
+    localStorage.removeItem('dash_token');
+    localStorage.removeItem('dash_exp');
+    window.location.replace('/login.html');
+  }
+})();
+
+function getToken() { return localStorage.getItem('dash_token') || ''; }
+
+function logout() {
+  localStorage.removeItem('dash_token');
+  localStorage.removeItem('dash_exp');
+  window.location.replace('/login.html');
+}
+
+// State
+let DATA   = null;
+let charts = {};
+let currentSection = 'overview';
+
+const SECTIONS = ['overview', 'clients', 'jobs', 'analytics'];
+const TITLES   = { overview:'Overview', clients:'Clients', jobs:'Jobs', analytics:'Analytics' };
+const SUBS     = {
+  overview: 'Real-time workforce metrics',
+  clients:  'Client management & search',
+  jobs:     'Job listings database',
+  analytics:'Detailed data analysis'
+};
+
+// Navigation
+function showSection(id) {
+  if (!SECTIONS.includes(id)) return;
+  currentSection = id;
+
+  SECTIONS.forEach(s => {
+    document.getElementById('sec-' + s).classList.toggle('active', s === id);
+  });
+
+  document.querySelectorAll('#desktopNav .nav-item').forEach(el => {
+    el.classList.toggle('active', el.dataset.sec === id);
+  });
+  document.querySelectorAll('#bottomNav .bnav-item').forEach(el => {
+    el.classList.toggle('active', el.dataset.sec === id);
+  });
+
+  document.getElementById('sectionTitle').textContent = TITLES[id];
+  document.getElementById('sectionSub').textContent = SUBS[id];
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  if (DATA) renderSection(id);
+}
+
+document.querySelectorAll('[data-sec]').forEach(el => {
+  el.addEventListener('click', () => showSection(el.dataset.sec));
+});
+
+// Load data
+async function loadData() {
+  document.getElementById('loadingPill').style.display = 'flex';
+  document.getElementById('errorBox').style.display = 'none';
+  try {
+    const res = await fetch('/.netlify/functions/stats', {
+      headers: { 'Authorization': 'Bearer ' + getToken() },
+    });
+    if (res.status === 401) { logout(); return; }
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    DATA = await res.json();
+    if (DATA.error) throw new Error(DATA.error);
+    render();
+  } catch (e) {
+    document.getElementById('errorBox').textContent = 'Failed to load data: ' + e.message;
+    document.getElementById('errorBox').style.display = '';
+  } finally {
+    document.getElementById('loadingPill').style.display = 'none';
+  }
+}
+
+// Main render
+function render() {
+  const s   = DATA.summary;
+  const now = new Date();
+
+  set('totalClients', s.totalClients.toLocaleString());
+  set('todayClients', s.todayClients);
+  set('weekClients',  s.weekClients);
+  set('monthClients', s.monthClients);
+  set('totalJobs',    s.totalJobs.toLocaleString());
+  set('todayDate',    now.toLocaleDateString('en-GB'));
+  set('monthName',    now.toLocaleString('en', { month: 'long', year: 'numeric' }));
+
+  const upd = new Date(DATA.updatedAt);
+  set('updatedAt', upd.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }));
+
+  renderLatestClients();
+  renderLatestJobs();
+  renderClientsFullTable();
+  renderJobsFullTable();
+
+  renderLineChart('chartPerDay',  DATA.charts.perDay);
+  renderDoughnut ('chartGender',  DATA.charts.byGender,      GENDER_COLORS);
+  renderDoughnut ('chartGender2', DATA.charts.byGender,      GENDER_COLORS);
+  renderBar      ('chartNationality',  DATA.charts.byNationality, '#3b82f6');
+  renderBar      ('chartLocation',     DATA.charts.byLocation,    '#10b981');
+  renderBar      ('chartNationality2', DATA.charts.byNationality, '#8b5cf6');
+  renderLineChart('chartPerDay2', DATA.charts.perDay);
+}
+
+function renderSection(id) {
+  if (id === 'clients') {
+    renderBar('chartNationality', DATA.charts.byNationality, '#3b82f6');
+    renderBar('chartLocation',    DATA.charts.byLocation,    '#10b981');
+  }
+  if (id === 'analytics') {
+    renderDoughnut ('chartGender2',      DATA.charts.byGender,      GENDER_COLORS);
+    renderBar      ('chartNationality2', DATA.charts.byNationality, '#8b5cf6');
+    renderLineChart('chartPerDay2',      DATA.charts.perDay);
+  }
+}
+
+// Table renderers
+function genderBadge(g) {
+  if (!g) return '<span class="badge badge-u">&mdash;</span>';
+  const cls = g === 'Male' ? 'badge-m' : g === 'Female' ? 'badge-f' : 'badge-u';
+  return `<span class="badge ${cls}">${g}</span>`;
+}
+
+function fmtDate(d) {
+  if (!d) return '—';
+  return String(d).slice(0, 10);
+}
+
+function renderLatestClients() {
+  set('latestClientsBody', DATA.latestClients.map(r => `
+    <tr>
+      <td>${r.name || '—'}</td>
+      <td>${r.nationality || '—'}</td>
+      <td>${genderBadge(r.gender)}</td>
+      <td>${fmtDate(r.date_in)}</td>
+    </tr>`).join(''));
+}
+
+function renderLatestJobs() {
+  set('latestJobsBody', DATA.latestJobs.map(r => `
+    <tr>
+      <td>${r.job_title || '—'}</td>
+      <td>${r.company   || '—'}</td>
+      <td>${r.source    || '—'}</td>
+      <td>${fmtDate(r.job_date)}</td>
+    </tr>`).join(''));
+}
+
+function renderClientsFullTable() {
+  set('clientsFullBody', DATA.latestClients.map((r, i) => `
+    <tr>
+      <td>${i + 1}</td>
+      <td>${r.name || '—'}</td>
+      <td>${r.email        || '—'}</td>
+      <td>${r.phone_number || '—'}</td>
+      <td>${r.nationality  || '—'}</td>
+      <td>${genderBadge(r.gender)}</td>
+      <td>${fmtDate(r.date_in)}</td>
+    </tr>`).join(''));
+}
+
+function renderJobsFullTable() {
+  set('jobsFullBody', DATA.latestJobs.map((r, i) => `
+    <tr>
+      <td>${i + 1}</td>
+      <td>${r.job_title || '—'}</td>
+      <td>${r.company   || '—'}</td>
+      <td>${r.source    || '—'}</td>
+      <td>${fmtDate(r.job_date)}</td>
+    </tr>`).join(''));
+}
+
+// Chart helpers
+const GENDER_COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6'];
+const TICK_COLOR    = '#5c6a8a';
+const GRID_COLOR    = '#1a2236';
+
+function destroyChart(id) {
+  if (charts[id]) { charts[id].destroy(); delete charts[id]; }
+}
+
+function renderLineChart(id, perDay) {
+  destroyChart(id);
+  const ctx = document.getElementById(id);
+  if (!ctx) return;
+  charts[id] = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: perDay.map(r => r.day),
+      datasets: [{
+        label: 'Clients',
+        data: perDay.map(r => Number(r.cnt)),
+        borderColor: '#3b82f6',
+        backgroundColor: 'rgba(59,130,246,.08)',
+        fill: true, tension: 0.4, pointRadius: 2, pointHoverRadius: 5,
+        borderWidth: 2,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: TICK_COLOR, maxTicksLimit: 7, maxRotation: 0, font: { family: 'Inter', size: 11 } }, grid: { color: GRID_COLOR } },
+        y: { ticks: { color: TICK_COLOR, precision: 0, font: { family: 'Inter', size: 11 } }, grid: { color: GRID_COLOR }, beginAtZero: true }
+      }
+    }
+  });
+}
+
+function renderDoughnut(id, data, colors) {
+  destroyChart(id);
+  const ctx = document.getElementById(id);
+  if (!ctx || !data.length) return;
+  charts[id] = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: data.map(r => r.label),
+      datasets: [{ data: data.map(r => Number(r.cnt)), backgroundColor: colors, borderWidth: 0 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      cutout: '65%',
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: { color: TICK_COLOR, font: { family: 'Inter', size: 11, weight: '500' }, padding: 14, boxWidth: 12, borderRadius: 3 }
+        }
+      }
+    }
+  });
+}
+
+function renderBar(id, data, color) {
+  destroyChart(id);
+  const ctx = document.getElementById(id);
+  if (!ctx || !data.length) return;
+  charts[id] = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: data.map(r => r.label),
+      datasets: [{
+        label: 'Count',
+        data: data.map(r => Number(r.cnt)),
+        backgroundColor: color + 'cc',
+        borderRadius: 4,
+        barThickness: 'flex',
+        maxBarThickness: 28,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      indexAxis: 'y',
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: TICK_COLOR, precision: 0, font: { family: 'Inter', size: 11 } }, grid: { color: GRID_COLOR }, beginAtZero: true },
+        y: { ticks: { color: TICK_COLOR, font: { family: 'Inter', size: 11 } }, grid: { color: 'transparent' } }
+      }
+    }
+  });
+}
+
+// Email search
+let searchTimer = null;
+let lastQuery   = '';
+
+const emailInput    = document.getElementById('emailSearch');
+const searchClear   = document.getElementById('searchClear');
+const searchSpinner = document.getElementById('searchSpinner');
+const searchStatus  = document.getElementById('searchStatus');
+
+emailInput.addEventListener('input', () => {
+  const q = emailInput.value.trim();
+  searchClear.style.display = q ? '' : 'none';
+  clearTimeout(searchTimer);
+
+  if (!q) {
+    lastQuery = '';
+    hideSearchStatus();
+    if (DATA) renderClientsFullTable();
+    set('clientsTableTitle', 'Latest 10 Clients');
+    return;
+  }
+
+  if (q.length < 2) return;
+  searchTimer = setTimeout(() => runSearch(q), 450);
+});
+
+searchClear.addEventListener('click', () => {
+  emailInput.value = '';
+  searchClear.style.display = 'none';
+  clearTimeout(searchTimer);
+  lastQuery = '';
+  hideSearchStatus();
+  if (DATA) renderClientsFullTable();
+  set('clientsTableTitle', 'Latest 10 Clients');
+  emailInput.focus();
+});
+
+async function runSearch(q) {
+  if (q === lastQuery) return;
+  lastQuery = q;
+  searchSpinner.style.display = '';
+  hideSearchStatus();
+
+  try {
+    const res = await fetch('/.netlify/functions/search?email=' + encodeURIComponent(q), {
+      headers: { 'Authorization': 'Bearer ' + getToken() },
+    });
+    if (res.status === 401) { logout(); return; }
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    const rows = data.results || [];
+    set('clientsTableTitle', rows.length
+      ? `Search results — ${rows.length} client${rows.length !== 1 ? 's' : ''} found`
+      : 'No clients found');
+
+    if (rows.length === 0) {
+      showSearchStatus('No clients matched that email.', false);
+      set('clientsFullBody', '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:24px">No results</td></tr>');
+      return;
+    }
+
+    hideSearchStatus();
+    set('clientsFullBody', rows.map((r, i) => `
+      <tr>
+        <td>${i + 1}</td>
+        <td>${r.name || '—'}</td>
+        <td>${r.email        || '—'}</td>
+        <td>${r.phone_number || '—'}</td>
+        <td>${r.nationality  || '—'}</td>
+        <td>${genderBadge(r.gender)}</td>
+        <td>${fmtDate(r.date_in)}</td>
+      </tr>`).join(''));
+
+  } catch (e) {
+    showSearchStatus('Search error: ' + e.message, true);
+  } finally {
+    searchSpinner.style.display = 'none';
+  }
+}
+
+function showSearchStatus(msg, isErr) {
+  searchStatus.textContent = msg;
+  searchStatus.className = 'search-status' + (isErr ? ' err' : '');
+  searchStatus.style.display = '';
+}
+function hideSearchStatus() {
+  searchStatus.style.display = 'none';
+}
+
+// Utility
+function set(id, html) {
+  const el = document.getElementById(id);
+  if (el) el.innerHTML = html;
+}
+
+// Init
+loadData();
+setInterval(loadData, 5 * 60 * 1000);
+</script>
+</body>
+</html>
