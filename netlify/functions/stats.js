@@ -46,6 +46,8 @@ exports.handler = async (event) => {
       latestClients,
       latestJobs,
       byLocation,
+      clientApps,
+      manualSummary,
     ] = await Promise.all([
       client.query('SELECT COUNT(*) FROM clients'),
       client.query("SELECT COUNT(*) FROM clients WHERE SUBSTR(date_in,1,10) = $1", [today]),
@@ -100,10 +102,10 @@ exports.handler = async (event) => {
         LIMIT 10
       `),
 
-      // latest 10 clients
+      // latest 30 clients
       client.query(`
         SELECT id, name, email, phone_number, nationality, gender, date_in
-        FROM clients ORDER BY date_in DESC, id DESC LIMIT 10
+        FROM clients ORDER BY date_in DESC, id DESC LIMIT 30
       `),
 
       // latest 10 jobs
@@ -119,15 +121,45 @@ exports.handler = async (event) => {
         FROM clients WHERE location IS NOT NULL AND location <> ''
         GROUP BY loc ORDER BY cnt DESC LIMIT 8
       `),
+
+      // clients with application counts (manual + auto)
+      client.query(`
+        SELECT c.id, c.name, c.email, c.nationality,
+               COUNT(ma.id)                                         AS manual_count,
+               COUNT(r.id) FILTER (WHERE r.status = 'applied')     AS auto_count
+        FROM clients c
+        LEFT JOIN manual_applications ma ON ma.client_id = c.id
+        LEFT JOIN rankings r             ON r.client_id  = c.id::text
+        GROUP BY c.id, c.name, c.email, c.nationality
+        HAVING COUNT(ma.id) > 0 OR COUNT(r.id) FILTER (WHERE r.status = 'applied') > 0
+        ORDER BY manual_count DESC, auto_count DESC
+        LIMIT 30
+      `),
+
+      // manual applications summary
+      client.query(`
+        SELECT COUNT(*)                                              AS total,
+               COUNT(*) FILTER (WHERE status = 'Applied')          AS applied,
+               COUNT(*) FILTER (WHERE status = 'Pending')          AS pending,
+               COUNT(*) FILTER (WHERE status = 'Rejected')         AS rejected,
+               COUNT(*) FILTER (WHERE status = 'Interview')        AS interview
+        FROM manual_applications
+      `),
     ]);
 
+    const ms = manualSummary.rows[0];
     const body = {
       summary: {
-        totalClients:  parseInt(totalClients.rows[0].count),
-        todayClients:  parseInt(todayClients.rows[0].count),
-        weekClients:   parseInt(weekClients.rows[0].count),
-        monthClients:  parseInt(monthClients.rows[0].count),
-        totalJobs:     parseInt(totalJobs.rows[0].count),
+        totalClients:    parseInt(totalClients.rows[0].count),
+        todayClients:    parseInt(todayClients.rows[0].count),
+        weekClients:     parseInt(weekClients.rows[0].count),
+        monthClients:    parseInt(monthClients.rows[0].count),
+        totalJobs:       parseInt(totalJobs.rows[0].count),
+        totalManual:     parseInt(ms.total),
+        manualApplied:   parseInt(ms.applied),
+        manualPending:   parseInt(ms.pending),
+        manualRejected:  parseInt(ms.rejected),
+        manualInterview: parseInt(ms.interview),
       },
       charts: {
         perDay:        perDay.rows.map(r => ({ day: r.day, cnt: parseInt(r.cnt) })),
@@ -135,9 +167,17 @@ exports.handler = async (event) => {
         byNationality: byNationality.rows.map(r => ({ label: r.label, cnt: parseInt(r.cnt) })),
         byLocation:    byLocation.rows.map(r => ({ label: r.loc, cnt: parseInt(r.cnt) })),
       },
-      latestClients: latestClients.rows,
-      latestJobs:    latestJobs.rows,
-      updatedAt:     new Date().toISOString(),
+      latestClients:      latestClients.rows,
+      latestJobs:         latestJobs.rows,
+      clientApplications: clientApps.rows.map(r => ({
+        id:          parseInt(r.id),
+        name:        r.name,
+        email:       r.email,
+        nationality: r.nationality,
+        manualCount: parseInt(r.manual_count),
+        autoCount:   parseInt(r.auto_count),
+      })),
+      updatedAt: new Date().toISOString(),
     };
 
     return { statusCode: 200, headers: CORS, body: JSON.stringify(body) };

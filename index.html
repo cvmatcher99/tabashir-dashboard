@@ -364,6 +364,15 @@ tr:hover td { background: rgba(59,130,246,.03); }
       </svg>
       Analytics
     </div>
+    <div class="nav-item" data-sec="manual">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+        <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+        <polyline points="10 9 9 9 8 9"/>
+      </svg>
+      Manual
+    </div>
   </nav>
   <div class="sidebar-footer">
     <div style="margin-bottom:6px">Last sync<br><span id="updatedAt">--:--</span></div>
@@ -476,7 +485,7 @@ tr:hover td { background: rgba(59,130,246,.03); }
     </div>
     <div class="table-card">
       <div class="table-card-header">
-        <div class="table-title" id="clientsTableTitle">Latest 10 Clients</div>
+        <div class="table-title" id="clientsTableTitle">Latest 30 Clients</div>
         <div class="search-wrap">
           <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
@@ -510,6 +519,47 @@ tr:hover td { background: rgba(59,130,246,.03); }
             <tr><th>#</th><th>Title</th><th>Company</th><th>Source</th><th>Date</th></tr>
           </thead>
           <tbody id="jobsFullBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- MANUAL APPLICATIONS -->
+  <div id="sec-manual" class="section">
+    <div class="cards">
+      <div class="card c1">
+        <div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+        <div class="card-label">Total Manual</div>
+        <div class="card-value" id="totalManual">&mdash;</div>
+        <div class="card-sub">all applications</div>
+      </div>
+      <div class="card c2">
+        <div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg></div>
+        <div class="card-label">Applied</div>
+        <div class="card-value" id="manualApplied">&mdash;</div>
+        <div class="card-sub">submitted</div>
+      </div>
+      <div class="card c3">
+        <div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+        <div class="card-label">Pending</div>
+        <div class="card-value" id="manualPending">&mdash;</div>
+        <div class="card-sub">awaiting</div>
+      </div>
+      <div class="card c4">
+        <div class="card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
+        <div class="card-label">Interview</div>
+        <div class="card-value" id="manualInterview">&mdash;</div>
+        <div class="card-sub">scheduled</div>
+      </div>
+    </div>
+    <div class="table-card">
+      <div class="table-title">Client Applications — Manual vs Auto (Top 30)</div>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr><th>#</th><th>Name</th><th>Email</th><th>Nationality</th><th>Manual</th><th>Auto</th><th>Total</th></tr>
+          </thead>
+          <tbody id="clientAppsBody"></tbody>
         </table>
       </div>
     </div>
@@ -567,6 +617,14 @@ tr:hover td { background: rgba(59,130,246,.03); }
     </svg>
     Analytics
   </div>
+  <div class="bnav-item" data-sec="manual">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+      <polyline points="14 2 14 8 20 8"/>
+      <line x1="16" y1="13" x2="8" y2="13"/>
+    </svg>
+    Manual
+  </div>
 </nav>
 
 <script>
@@ -594,11 +652,12 @@ let DATA   = null;
 let charts = {};
 let currentSection = 'overview';
 
-const SECTIONS = ['overview', 'clients', 'jobs', 'analytics'];
-const TITLES   = { overview:'Overview', clients:'Clients', jobs:'Jobs', analytics:'Analytics' };
+const SECTIONS = ['overview', 'clients', 'jobs', 'analytics', 'manual'];
+const TITLES   = { overview:'Overview', clients:'Clients', jobs:'Jobs', analytics:'Analytics', manual:'Manual Applications' };
 const SUBS     = {
   overview: 'Real-time workforce metrics',
   clients:  'Client management & search',
+  manual:   'Manual & automatic application tracking',
   jobs:     'Job listings database',
   analytics:'Detailed data analysis'
 };
@@ -656,11 +715,15 @@ function render() {
   const s   = DATA.summary;
   const now = new Date();
 
-  set('totalClients', s.totalClients.toLocaleString());
-  set('todayClients', s.todayClients);
-  set('weekClients',  s.weekClients);
-  set('monthClients', s.monthClients);
-  set('totalJobs',    s.totalJobs.toLocaleString());
+  set('totalClients',   s.totalClients.toLocaleString());
+  set('todayClients',   s.todayClients);
+  set('weekClients',    s.weekClients);
+  set('monthClients',   s.monthClients);
+  set('totalJobs',      s.totalJobs.toLocaleString());
+  set('totalManual',    (s.totalManual    || 0).toLocaleString());
+  set('manualApplied',  (s.manualApplied  || 0).toLocaleString());
+  set('manualPending',  (s.manualPending  || 0).toLocaleString());
+  set('manualInterview',(s.manualInterview|| 0).toLocaleString());
   set('todayDate',    now.toLocaleDateString('en-GB'));
   set('monthName',    now.toLocaleString('en', { month: 'long', year: 'numeric' }));
 
@@ -671,6 +734,7 @@ function render() {
   renderLatestJobs();
   renderClientsFullTable();
   renderJobsFullTable();
+  renderClientApps();
 
   renderLineChart('chartPerDay',  DATA.charts.perDay);
   renderDoughnut ('chartGender',  DATA.charts.byGender,      GENDER_COLORS);
@@ -747,6 +811,23 @@ function renderJobsFullTable() {
       <td>${r.source    || '—'}</td>
       <td>${fmtDate(r.job_date)}</td>
     </tr>`).join(''));
+}
+
+function renderClientApps() {
+  const rows = DATA.clientApplications || [];
+  set('clientAppsBody', rows.map((r, i) => {
+    const total = r.manualCount + r.autoCount;
+    const mPct  = total ? Math.round(r.manualCount / total * 100) : 0;
+    return `<tr>
+      <td>${i + 1}</td>
+      <td>${r.name || '—'}</td>
+      <td>${r.email || '—'}</td>
+      <td>${r.nationality || '—'}</td>
+      <td><span class="badge badge-m">${r.manualCount}</span></td>
+      <td><span class="badge badge-f">${r.autoCount}</span></td>
+      <td><strong>${total}</strong></td>
+    </tr>`;
+  }).join(''));
 }
 
 // Chart helpers
