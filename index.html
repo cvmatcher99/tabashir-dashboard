@@ -190,18 +190,13 @@ body {
   content: ''; width: 3px; height: 13px; border-radius: 2px;
   background: var(--accent2); flex-shrink: 0;
 }
-.table-scroll {
-  overflow-x: auto; -webkit-overflow-scrolling: touch;
-  border-radius: 8px;
-}
-.table-scroll::-webkit-scrollbar { height: 3px; }
-.table-scroll::-webkit-scrollbar-thumb { background: var(--border-hi); border-radius: 2px; }
-table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 340px; }
+.table-scroll { width: 100%; }
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
 th {
   color: var(--muted); font-weight: 600; text-align: left;
   padding: 8px 10px; border-bottom: 2px solid var(--border);
   font-size: 9px; text-transform: uppercase; letter-spacing: .5px; white-space: nowrap;
-  background: var(--surface2); position: sticky; top: 0;
+  background: var(--surface2);
 }
 td {
   padding: 10px 10px; border-bottom: 1px solid var(--border);
@@ -210,6 +205,32 @@ td {
 }
 tr:last-child td { border-bottom: none; }
 tr:active td { background: var(--bg); }
+
+/* ── MOBILE TABLE → CARDS ── */
+@media (max-width: 539px) {
+  .table-scroll { overflow-x: unset; }
+  table, thead, tbody, tr, th, td { display: block; width: 100%; box-sizing: border-box; }
+  thead { display: none; }
+  tbody tr {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 10px; margin-bottom: 8px; overflow: hidden;
+  }
+  tbody tr:last-child { margin-bottom: 0; }
+  td {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 9px 12px; max-width: none; white-space: normal;
+    border-bottom: 1px solid var(--border); overflow: visible;
+    text-overflow: unset; gap: 8px;
+  }
+  td:last-child { border-bottom: none; }
+  td::before {
+    content: attr(data-label);
+    font-size: 10px; color: var(--muted); font-weight: 600;
+    text-transform: uppercase; letter-spacing: .4px;
+    flex-shrink: 0; min-width: 80px;
+  }
+  td:first-child { display: none; } /* hide # column */
+}
 
 /* ── BADGES ── */
 .badge {
@@ -818,38 +839,74 @@ function fmtDate(d) { return d ? String(d).slice(0,10) : '—'; }
 
 function renderLatestClients() {
   set('latestClientsBody', (DATA.latestClients||[]).map(r => `
-    <tr><td>${r.name||'—'}</td><td>${r.nationality||'—'}</td><td>${genderBadge(r.gender)}</td><td>${fmtDate(r.date_in)}</td></tr>`).join(''));
+    <tr>
+      <td data-label="Name">${r.name||'—'}</td>
+      <td data-label="Nationality">${r.nationality||'—'}</td>
+      <td data-label="Gender">${genderBadge(r.gender)}</td>
+      <td data-label="Date">${fmtDate(r.date_in)}</td>
+    </tr>`).join(''));
 }
 function renderLatestJobs() {
   set('latestJobsBody', (DATA.latestJobs||[]).map(r => `
-    <tr><td>${r.job_title||'—'}</td><td>${r.company||'—'}</td><td>${r.source||'—'}</td><td>${fmtDate(r.job_date)}</td></tr>`).join(''));
+    <tr>
+      <td data-label="Title">${r.job_title||'—'}</td>
+      <td data-label="Company">${r.company||'—'}</td>
+      <td data-label="Source">${r.source||'—'}</td>
+      <td data-label="Date">${fmtDate(r.job_date)}</td>
+    </tr>`).join(''));
 }
 function renderClientsFullTable() {
   set('clientsFullBody', (DATA.latestClients||[]).map((r,i) => `
-    <tr><td>${i+1}</td><td>${r.name||'—'}</td><td>${r.email||'—'}</td><td>${r.phone_number||'—'}</td><td>${r.nationality||'—'}</td><td>${genderBadge(r.gender)}</td><td>${fmtDate(r.date_in)}</td></tr>`).join(''));
+    <tr>
+      <td>${i+1}</td>
+      <td data-label="Name">${r.name||'—'}</td>
+      <td data-label="Email">${r.email||'—'}</td>
+      <td data-label="Phone">${r.phone_number||'—'}</td>
+      <td data-label="Nationality">${r.nationality||'—'}</td>
+      <td data-label="Gender">${genderBadge(r.gender)}</td>
+      <td data-label="Date">${fmtDate(r.date_in)}</td>
+    </tr>`).join(''));
 }
 function renderJobsFullTable() {
   set('jobsFullBody', (DATA.latestJobs||[]).map((r,i) => `
-    <tr><td>${i+1}</td><td>${r.job_title||'—'}</td><td>${r.company||'—'}</td><td>${r.source||'—'}</td><td>${fmtDate(r.job_date)}</td></tr>`).join(''));
+    <tr>
+      <td>${i+1}</td>
+      <td data-label="Title">${r.job_title||'—'}</td>
+      <td data-label="Company">${r.company||'—'}</td>
+      <td data-label="Source">${r.source||'—'}</td>
+      <td data-label="Date">${fmtDate(r.job_date)}</td>
+    </tr>`).join(''));
 }
 
 function renderClientApps() {
   const rows = DATA.clientApplications || [];
   set('clientAppsBody', rows.map((r,i) => {
-    const total  = r.manualCount + r.autoCount;
     const mQuota = r.manualQuota || 0;
     const aQuota = r.autoQuota   || 0;
     return `<tr>
       <td>${i+1}</td>
-      <td><strong>${r.name||'—'}</strong></td>
-      <td>${r.nationality||'—'}</td>
-      <td><strong>${r.totalJobs||0}</strong></td>
-      <td><span class="badge badge-f">${mQuota}</span></td>
-      <td><span class="badge badge-m">${aQuota}</span></td>
-      <td><span class="badge badge-warn">${r.manualCount}</span></td>
-      <td><span class="badge badge-purple">${r.autoCount}</span></td>
+      <td data-label="Name"><strong>${r.name||'—'}</strong></td>
+      <td data-label="Nationality">${r.nationality||'—'}</td>
+      <td data-label="Total"><strong>${r.totalJobs||0}</strong></td>
+      <td data-label="Manual Q"><span class="badge badge-f">${mQuota}</span></td>
+      <td data-label="Auto Q"><span class="badge badge-m">${aQuota}</span></td>
+      <td data-label="Done (M)"><span class="badge badge-warn">${r.manualCount}</span></td>
+      <td data-label="Done (A)"><span class="badge badge-purple">${r.autoCount}</span></td>
     </tr>`;
   }).join(''));
+}
+
+function renderSearchResults(rows) {
+  set('clientsFullBody', rows.map((r,i) => `
+    <tr>
+      <td>${i+1}</td>
+      <td data-label="Name">${r.name||'—'}</td>
+      <td data-label="Email">${r.email||'—'}</td>
+      <td data-label="Phone">${r.phone_number||'—'}</td>
+      <td data-label="Nationality">${r.nationality||'—'}</td>
+      <td data-label="Gender">${genderBadge(r.gender)}</td>
+      <td data-label="Date">${fmtDate(r.date_in)}</td>
+    </tr>`).join(''));
 }
 
 function renderManualClientCards() {
@@ -998,7 +1055,7 @@ async function runSearch(q) {
     set('clientsTableTitle', rows.length ? `Search — ${rows.length} client${rows.length!==1?'s':''} found` : 'No clients found');
     if (!rows.length) { showSearchStatus('No clients matched that email.', false); set('clientsFullBody','<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:24px">No results</td></tr>'); return; }
     hideSearchStatus();
-    set('clientsFullBody', rows.map((r,i) => `<tr><td>${i+1}</td><td>${r.name||'—'}</td><td>${r.email||'—'}</td><td>${r.phone_number||'—'}</td><td>${r.nationality||'—'}</td><td>${genderBadge(r.gender)}</td><td>${fmtDate(r.date_in)}</td></tr>`).join(''));
+    renderSearchResults(rows);
   } catch(e) { showSearchStatus('Search error: '+e.message, true); }
   finally { searchSpinner.style.display='none'; }
 }
