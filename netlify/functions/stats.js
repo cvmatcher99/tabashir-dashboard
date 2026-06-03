@@ -17,37 +17,22 @@ const CORS = {
 };
 
 exports.handler = async (event) => {
-  // ── Auth check ────────────────────────────────────────────────────────
   const auth  = (event.headers && event.headers['authorization']) || '';
   const token = auth.startsWith('Bearer ') ? auth.slice(7) : '';
-  try {
-    jwt.verify(token, process.env.JWT_SECRET);
-  } catch {
-    return { statusCode: 401, headers: CORS, body: JSON.stringify({ error: 'Unauthorized' }) };
-  }
+  try { jwt.verify(token, process.env.JWT_SECRET); }
+  catch { return { statusCode: 401, headers: CORS, body: JSON.stringify({ error: 'Unauthorized' }) }; }
 
   const client = new Client(DB);
   try {
     await client.connect();
-
-    const today     = new Date().toISOString().split('T')[0];
-    const weekAgo   = new Date(Date.now() - 7  * 86400000).toISOString().split('T')[0];
+    const today      = new Date().toISOString().split('T')[0];
+    const weekAgo    = new Date(Date.now() - 7  * 86400000).toISOString().split('T')[0];
     const monthStart = today.slice(0, 7) + '-01';
 
     const [
-      totalClients,
-      todayClients,
-      weekClients,
-      monthClients,
-      totalJobs,
-      perDay,
-      byGender,
-      byNationality,
-      latestClients,
-      latestJobs,
-      byLocation,
-      clientApps,
-      manualSummary,
+      totalClients, todayClients, weekClients, monthClients, totalJobs,
+      perDay, byGender, byNationality, latestClients, latestJobs,
+      byLocation, clientApps, manualSummary,
     ] = await Promise.all([
       client.query('SELECT COUNT(*) FROM clients'),
       client.query("SELECT COUNT(*) FROM clients WHERE SUBSTR(date_in,1,10) = $1", [today]),
@@ -55,94 +40,79 @@ exports.handler = async (event) => {
       client.query("SELECT COUNT(*) FROM clients WHERE SUBSTR(date_in,1,10) >= $1", [monthStart]),
       client.query('SELECT COUNT(*) FROM jobs'),
 
-      // clients per day last 30 days (normalise date_in to YYYY-MM-DD)
       client.query(`
         SELECT SUBSTR(date_in, 1, 10) AS day, COUNT(*) AS cnt
-        FROM clients
-        WHERE SUBSTR(date_in, 1, 10) >= $1
+        FROM clients WHERE SUBSTR(date_in, 1, 10) >= $1
         GROUP BY SUBSTR(date_in, 1, 10) ORDER BY day ASC
       `, [new Date(Date.now() - 30 * 86400000).toISOString().split('T')[0]]),
 
-      // by gender — normalise to Male / Female only
       client.query(`
         SELECT
-          CASE
-            WHEN LOWER(TRIM(gender)) IN ('male','m') THEN 'Male'
-            WHEN LOWER(TRIM(gender)) IN ('female','f') THEN 'Female'
-          END AS label,
+          CASE WHEN LOWER(TRIM(gender)) IN ('male','m') THEN 'Male'
+               WHEN LOWER(TRIM(gender)) IN ('female','f') THEN 'Female' END AS label,
           COUNT(*) AS cnt
         FROM clients
         WHERE LOWER(TRIM(COALESCE(gender,''))) IN ('male','m','female','f')
-        GROUP BY label
-        ORDER BY cnt DESC
+        GROUP BY label ORDER BY cnt DESC
       `),
 
-      // top 10 nationalities — normalise common variants
       client.query(`
         SELECT
           CASE
             WHEN LOWER(TRIM(nationality)) IN ('emirati','emarati','uae','united arab emirates','u.a.e','emirate','ae') THEN 'Emirati'
-            WHEN LOWER(TRIM(nationality)) IN ('sudanese','sudan')        THEN 'Sudanese'
-            WHEN LOWER(TRIM(nationality)) IN ('egyptian','egypt')        THEN 'Egyptian'
-            WHEN LOWER(TRIM(nationality)) IN ('syrian','syria')          THEN 'Syrian'
-            WHEN LOWER(TRIM(nationality)) IN ('jordanian','jordan')      THEN 'Jordanian'
-            WHEN LOWER(TRIM(nationality)) IN ('yemeni','yemen')          THEN 'Yemeni'
-            WHEN LOWER(TRIM(nationality)) IN ('lebanese','lebanon')      THEN 'Lebanese'
-            WHEN LOWER(TRIM(nationality)) IN ('pakistani','pakistan')    THEN 'Pakistani'
-            WHEN LOWER(TRIM(nationality)) IN ('indian','india')          THEN 'Indian'
+            WHEN LOWER(TRIM(nationality)) IN ('sudanese','sudan')     THEN 'Sudanese'
+            WHEN LOWER(TRIM(nationality)) IN ('egyptian','egypt')     THEN 'Egyptian'
+            WHEN LOWER(TRIM(nationality)) IN ('syrian','syria')       THEN 'Syrian'
+            WHEN LOWER(TRIM(nationality)) IN ('jordanian','jordan')   THEN 'Jordanian'
+            WHEN LOWER(TRIM(nationality)) IN ('yemeni','yemen')       THEN 'Yemeni'
+            WHEN LOWER(TRIM(nationality)) IN ('lebanese','lebanon')   THEN 'Lebanese'
+            WHEN LOWER(TRIM(nationality)) IN ('pakistani','pakistan') THEN 'Pakistani'
+            WHEN LOWER(TRIM(nationality)) IN ('indian','india')       THEN 'Indian'
             WHEN TRIM(COALESCE(nationality,'')) = '' OR LOWER(TRIM(nationality)) IN ('unknown','any','n/a') THEN NULL
             ELSE INITCAP(TRIM(nationality))
-          END AS label,
-          COUNT(*) AS cnt
+          END AS label, COUNT(*) AS cnt
         FROM clients
-        WHERE TRIM(COALESCE(nationality,'')) != ''
-          AND LOWER(TRIM(nationality)) NOT IN ('unknown','any','n/a')
-        GROUP BY label
-        ORDER BY cnt DESC
-        LIMIT 10
+        WHERE TRIM(COALESCE(nationality,'')) != '' AND LOWER(TRIM(nationality)) NOT IN ('unknown','any','n/a')
+        GROUP BY label ORDER BY cnt DESC LIMIT 10
       `),
 
-      // latest 30 clients
       client.query(`
         SELECT id, name, email, phone_number, nationality, gender, date_in
         FROM clients ORDER BY date_in DESC, id DESC LIMIT 30
       `),
 
-      // latest 10 jobs
       client.query(`
-        SELECT id, job_title, COALESCE(company_name, entity, '') AS company,
-               source, job_date
+        SELECT id, job_title, COALESCE(company_name, entity, '') AS company, source, job_date
         FROM jobs ORDER BY job_date DESC, id DESC LIMIT 10
       `),
 
-      // top locations
       client.query(`
         SELECT TRIM(unnest(string_to_array(location, ','))) AS loc, COUNT(*) AS cnt
         FROM clients WHERE location IS NOT NULL AND location <> ''
         GROUP BY loc ORDER BY cnt DESC LIMIT 8
       `),
 
-      // clients with application counts (manual + auto)
       client.query(`
         SELECT c.id, c.name, c.email, c.nationality,
-               COUNT(ma.id)                                         AS manual_count,
-               COUNT(r.id) FILTER (WHERE r.status = 'applied')     AS auto_count
+               COALESCE(c.jobs_to_apply_number, 0)                         AS total_jobs,
+               COALESCE(c.manual_quota, 0)                                  AS manual_quota,
+               COUNT(ma.id)                                                 AS manual_count,
+               COUNT(r.id) FILTER (WHERE r.status = 'applied')             AS auto_count
         FROM clients c
         LEFT JOIN manual_applications ma ON ma.client_id = c.id
         LEFT JOIN rankings r             ON r.client_id  = c.id::text
-        GROUP BY c.id, c.name, c.email, c.nationality
-        HAVING COUNT(ma.id) > 0 OR COUNT(r.id) FILTER (WHERE r.status = 'applied') > 0
-        ORDER BY manual_count DESC, auto_count DESC
-        LIMIT 30
+        GROUP BY c.id, c.name, c.email, c.nationality, c.jobs_to_apply_number, c.manual_quota
+        HAVING COUNT(ma.id) > 0 OR COALESCE(c.manual_quota,0) > 0 OR COALESCE(c.jobs_to_apply_number,0) > 0
+        ORDER BY manual_count DESC, total_jobs DESC
+        LIMIT 50
       `),
 
-      // manual applications summary
       client.query(`
-        SELECT COUNT(*)                                              AS total,
-               COUNT(*) FILTER (WHERE status = 'Applied')          AS applied,
-               COUNT(*) FILTER (WHERE status = 'Pending')          AS pending,
-               COUNT(*) FILTER (WHERE status = 'Rejected')         AS rejected,
-               COUNT(*) FILTER (WHERE status = 'Interview')        AS interview
+        SELECT COUNT(*)                                           AS total,
+               COUNT(*) FILTER (WHERE status = 'Applied')        AS applied,
+               COUNT(*) FILTER (WHERE status = 'Pending')        AS pending,
+               COUNT(*) FILTER (WHERE status = 'Rejected')       AS rejected,
+               COUNT(*) FILTER (WHERE status = 'Interview')      AS interview
         FROM manual_applications
       `),
     ]);
@@ -167,13 +137,16 @@ exports.handler = async (event) => {
         byNationality: byNationality.rows.map(r => ({ label: r.label, cnt: parseInt(r.cnt) })),
         byLocation:    byLocation.rows.map(r => ({ label: r.loc, cnt: parseInt(r.cnt) })),
       },
-      latestClients:      latestClients.rows,
-      latestJobs:         latestJobs.rows,
+      latestClients: latestClients.rows,
+      latestJobs:    latestJobs.rows,
       clientApplications: clientApps.rows.map(r => ({
         id:          parseInt(r.id),
         name:        r.name,
         email:       r.email,
         nationality: r.nationality,
+        totalJobs:   parseInt(r.total_jobs),
+        manualQuota: parseInt(r.manual_quota),
+        autoQuota:   parseInt(r.total_jobs) - parseInt(r.manual_quota),
         manualCount: parseInt(r.manual_count),
         autoCount:   parseInt(r.auto_count),
       })),
