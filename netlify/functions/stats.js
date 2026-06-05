@@ -141,8 +141,8 @@ exports.handler = async (event) => {
         SELECT
           'FATMA',
           COUNT(*) FILTER (WHERE job_date::text = $1),
-          COUNT(*) FILTER (WHERE job_date >= $2::date),
-          COUNT(*) FILTER (WHERE job_date >= $3::date),
+          COUNT(*) FILTER (WHERE job_date::text >= $2),
+          COUNT(*) FILTER (WHERE job_date::text >= $3),
           COUNT(*)
         FROM jobs
       `, [today, weekAgo, monthStart]),
