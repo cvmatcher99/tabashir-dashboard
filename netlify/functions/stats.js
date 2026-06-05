@@ -101,10 +101,10 @@ exports.handler = async (event) => {
         FROM clients c
         LEFT JOIN manual_applications ma ON ma.client_id = c.id
         LEFT JOIN rankings r             ON r.client_id  = c.id::text
+        WHERE COALESCE(c.client_type, 'fresh') = 'fresh'
         GROUP BY c.id, c.name, c.email, c.nationality, c.jobs_to_apply_number, c.manual_quota
-        HAVING COUNT(ma.id) > 0 OR COALESCE(c.manual_quota,0) > 0 OR COALESCE(c.jobs_to_apply_number,0) > 0
-        ORDER BY manual_count DESC, total_jobs DESC
-        LIMIT 50
+        ORDER BY (COALESCE(c.manual_quota,0) + COUNT(ma.id)) DESC
+        LIMIT 100
       `),
 
       client.query(`
