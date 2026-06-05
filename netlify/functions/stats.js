@@ -32,7 +32,7 @@ exports.handler = async (event) => {
     const [
       totalClients, todayClients, weekClients, monthClients, totalJobs,
       perDay, byGender, byNationality, latestClients, latestJobs,
-      byLocation, clientApps, manualSummary,
+      byLocation, clientApps, manualSummary, employeeStats,
     ] = await Promise.all([
       client.query('SELECT COUNT(*) FROM clients'),
       client.query("SELECT COUNT(*) FROM clients WHERE SUBSTR(date_in,1,10) = $1", [today]),
@@ -115,6 +115,19 @@ exports.handler = async (event) => {
                COUNT(*) FILTER (WHERE status = 'Interview')      AS interview
         FROM manual_applications
       `),
+
+      client.query(`
+        SELECT
+          applied_by,
+          COUNT(*) FILTER (WHERE app_date = CURRENT_DATE)                             AS today,
+          COUNT(*) FILTER (WHERE app_date >= CURRENT_DATE - INTERVAL '6 days')        AS week,
+          COUNT(*) FILTER (WHERE DATE_TRUNC('month', created_at) = DATE_TRUNC('month', CURRENT_DATE)) AS month,
+          COUNT(*)                                                                     AS total
+        FROM manual_applications
+        WHERE applied_by IN ('AMIRA','RAHMA','RAWAN')
+        GROUP BY applied_by
+        ORDER BY applied_by
+      `),
     ]);
 
     const ms = manualSummary.rows[0];
@@ -149,6 +162,13 @@ exports.handler = async (event) => {
         autoQuota:   parseInt(r.total_jobs) - parseInt(r.manual_quota),
         manualCount: parseInt(r.manual_count),
         autoCount:   parseInt(r.auto_count),
+      })),
+      employeeStats: employeeStats.rows.map(r => ({
+        name:  r.applied_by,
+        today: parseInt(r.today),
+        week:  parseInt(r.week),
+        month: parseInt(r.month),
+        total: parseInt(r.total),
       })),
       updatedAt: new Date().toISOString(),
     };

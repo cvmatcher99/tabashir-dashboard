@@ -207,6 +207,9 @@ tr:last-child td { border-bottom: none; }
 tr:active td { background: var(--bg); }
 
 /* ── MOBILE TABLE → CARDS ── */
+@media (max-width: 700px) {
+  #employeeStatsWrap { grid-template-columns: 1fr !important; }
+}
 @media (max-width: 539px) {
   .table-scroll { overflow-x: unset; }
   table, thead, tbody, tr, th, td { display: block; width: 100%; box-sizing: border-box; }
@@ -642,9 +645,15 @@ tr:active td { background: var(--bg); }
       </div>
     </div>
 
+    <!-- Employee Stats -->
+    <div class="table-card">
+      <div class="table-title">Employee Performance</div>
+      <div id="employeeStatsWrap" style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;padding:8px 0"></div>
+    </div>
+
     <!-- Client Quota Cards -->
     <div class="table-card">
-      <div class="table-title">Client Application Quota — Manual vs Auto</div>
+      <div class="table-title">Client Application Progress</div>
       <div id="manualClientCards"><div class="spinner"><div class="spin"></div></div></div>
     </div>
 
@@ -807,6 +816,7 @@ function render() {
   renderClientsFullTable();
   renderJobsFullTable();
   renderClientApps();
+  renderEmployeeStats();
   renderManualClientCards();
 
   renderLineChart('chartPerDay',  DATA.charts.perDay);
@@ -907,6 +917,45 @@ function renderSearchResults(rows) {
       <td data-label="Gender">${genderBadge(r.gender)}</td>
       <td data-label="Date">${fmtDate(r.date_in)}</td>
     </tr>`).join(''));
+}
+
+function renderEmployeeStats() {
+  const rows = DATA.employeeStats || [];
+  const EMP_COLORS = { AMIRA: '#a78bfa', RAHMA: '#34d399', RAWAN: '#f472b6' };
+  const EMP_BG     = { AMIRA: '#1e1040', RAHMA: '#052e16', RAWAN: '#3b0a2a' };
+  if (!rows.length) {
+    set('employeeStatsWrap', '<p style="color:var(--muted);padding:16px;grid-column:1/-1">No data yet</p>');
+    return;
+  }
+  const all = ['AMIRA','RAHMA','RAWAN'];
+  const map = Object.fromEntries(rows.map(r => [r.name, r]));
+  set('employeeStatsWrap', all.map(name => {
+    const r = map[name] || { today:0, week:0, month:0, total:0 };
+    const c = EMP_COLORS[name] || '#888';
+    const bg = EMP_BG[name] || '#1a1a1a';
+    return `
+    <div style="background:${bg};border:1.5px solid ${c}33;border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:14px">
+      <div style="font-size:17px;font-weight:700;color:${c};letter-spacing:.5px">${name}</div>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px">
+        <div style="background:#ffffff0d;border-radius:10px;padding:10px;text-align:center">
+          <div style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px">Today</div>
+          <div style="font-size:26px;font-weight:700;color:${c}">${r.today}</div>
+        </div>
+        <div style="background:#ffffff0d;border-radius:10px;padding:10px;text-align:center">
+          <div style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px">This Week</div>
+          <div style="font-size:26px;font-weight:700;color:${c}">${r.week}</div>
+        </div>
+        <div style="background:#ffffff0d;border-radius:10px;padding:10px;text-align:center">
+          <div style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px">This Month</div>
+          <div style="font-size:26px;font-weight:700;color:${c}">${r.month}</div>
+        </div>
+        <div style="background:#ffffff0d;border-radius:10px;padding:10px;text-align:center">
+          <div style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px">All Time</div>
+          <div style="font-size:26px;font-weight:700;color:var(--text)">${r.total}</div>
+        </div>
+      </div>
+    </div>`;
+  }).join(''));
 }
 
 function renderManualClientCards() {
