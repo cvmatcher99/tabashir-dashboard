@@ -916,10 +916,10 @@ function renderManualClientCards() {
     return;
   }
   const html = rows.map(r => {
-    const total   = r.totalJobs  || 0;
-    const mQuota  = r.manualQuota || 0;
-    const mDone   = r.manualCount || 0;
-    const pct     = mQuota > 0 ? Math.min(100, Math.round(mDone / mQuota * 100)) : 0;
+    const applied = (r.manualQuota || 0) + (r.manualCount || 0);
+    const target  = 100;
+    const pct     = Math.min(100, Math.round(applied / target * 100));
+    const barColor = pct >= 100 ? '#38d9a9' : pct >= 60 ? '#4f8ef7' : '#f7a84f';
     return `
     <div class="manual-client-card">
       <div>
@@ -928,29 +928,21 @@ function renderManualClientCards() {
       </div>
       <div class="quota-bar-wrap">
         <div class="quota-bar-labels">
-          <span>Manual Progress</span>
-          <span>${mDone} / ${mQuota} (${pct}%)</span>
+          <span>Applied Progress</span>
+          <span>${applied} / ${target} (${pct}%)</span>
         </div>
         <div class="quota-bar">
-          <div class="quota-bar-fill" style="width:${pct}%"></div>
+          <div class="quota-bar-fill" style="width:${pct}%; background:${barColor}"></div>
         </div>
       </div>
-      <div class="quota-stats">
+      <div class="quota-stats" style="grid-template-columns:repeat(2,1fr)">
         <div class="quota-stat">
-          <span class="quota-stat-label">Total</span>
-          <span class="quota-stat-value qs-total">${total}</span>
+          <span class="quota-stat-label">Applied</span>
+          <span class="quota-stat-value qs-done">${applied}</span>
         </div>
         <div class="quota-stat">
-          <span class="quota-stat-label">Manual Q</span>
-          <span class="quota-stat-value qs-manual">${mQuota}</span>
-        </div>
-        <div class="quota-stat">
-          <span class="quota-stat-label">Auto Q</span>
-          <span class="quota-stat-value qs-auto">${total - mQuota}</span>
-        </div>
-        <div class="quota-stat">
-          <span class="quota-stat-label">Done</span>
-          <span class="quota-stat-value qs-done">${mDone}</span>
+          <span class="quota-stat-label">Target</span>
+          <span class="quota-stat-value qs-total">${target}</span>
         </div>
       </div>
     </div>`;
