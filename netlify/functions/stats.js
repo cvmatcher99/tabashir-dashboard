@@ -32,7 +32,7 @@ exports.handler = async (event) => {
     const [
       totalClients, todayClients, weekClients, monthClients, totalJobs,
       perDay, byGender, byNationality, latestClients, latestJobs,
-      byLocation, clientApps, manualSummary, employeeStats,
+      byLocation, clientApps, manualSummary, employeeStats, staffStats,
     ] = await Promise.all([
       client.query('SELECT COUNT(*) FROM clients'),
       client.query("SELECT COUNT(*) FROM clients WHERE SUBSTR(date_in,1,10) = $1", [today]),
@@ -128,6 +128,24 @@ exports.handler = async (event) => {
         GROUP BY applied_by
         ORDER BY applied_by
       `),
+
+      client.query(`
+        SELECT
+          'ZAINAB'                                                                            AS role,
+          COUNT(*) FILTER (WHERE SUBSTR(date_in,1,10) = $1)                                  AS today,
+          COUNT(*) FILTER (WHERE SUBSTR(date_in,1,10) >= $2)                                  AS week,
+          COUNT(*) FILTER (WHERE SUBSTR(date_in,1,10) >= $3)                                  AS month,
+          COUNT(*)                                                                             AS total
+        FROM clients
+        UNION ALL
+        SELECT
+          'FATMA',
+          COUNT(*) FILTER (WHERE job_date::text = $1),
+          COUNT(*) FILTER (WHERE job_date >= $2::date),
+          COUNT(*) FILTER (WHERE job_date >= $3::date),
+          COUNT(*)
+        FROM jobs
+      `, [today, weekAgo, monthStart]),
     ]);
 
     const ms = manualSummary.rows[0];
@@ -162,6 +180,13 @@ exports.handler = async (event) => {
         autoQuota:   parseInt(r.total_jobs) - parseInt(r.manual_quota),
         manualCount: parseInt(r.manual_count),
         autoCount:   parseInt(r.auto_count),
+      })),
+      staffStats: staffStats.rows.map(r => ({
+        role:  r.role,
+        today: parseInt(r.today),
+        week:  parseInt(r.week),
+        month: parseInt(r.month),
+        total: parseInt(r.total),
       })),
       employeeStats: employeeStats.rows.map(r => ({
         name:  r.applied_by,

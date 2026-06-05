@@ -208,7 +208,8 @@ tr:active td { background: var(--bg); }
 
 /* ── MOBILE TABLE → CARDS ── */
 @media (max-width: 700px) {
-  #employeeStatsWrap { grid-template-columns: 1fr !important; }
+  #employeeStatsWrap, #staffManualWrap { grid-template-columns: 1fr !important; }
+  #zainabStatsWrap > div, #fatmaStatsWrap > div { grid-template-columns: repeat(2,1fr) !important; }
 }
 @media (max-width: 539px) {
   .table-scroll { overflow-x: unset; }
@@ -456,6 +457,10 @@ tr:active td { background: var(--bg); }
       </svg>
       Manual
     </div>
+    <div class="nav-item" data-sec="staff">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Staff
+    </div>
     <div class="nav-item" data-sec="analytics">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <line x1="18" y1="20" x2="18" y2="10"/>
@@ -676,6 +681,38 @@ tr:active td { background: var(--bg); }
   </div>
 
   <!-- ANALYTICS -->
+  <!-- STAFF SECTION -->
+  <div id="sec-staff" class="section">
+    <!-- Zainab - Client Entry -->
+    <div class="table-card">
+      <div class="table-title" style="display:flex;align-items:center;gap:10px">
+        <span style="color:#fbbf24;font-size:18px;font-weight:700">ZAINAB</span>
+        <span style="color:var(--muted);font-size:12px;font-weight:400">— Client Entry</span>
+      </div>
+      <div id="zainabStatsWrap"></div>
+    </div>
+
+    <!-- Manual Apply Team -->
+    <div class="table-card">
+      <div class="table-title" style="display:flex;align-items:center;gap:10px">
+        <span style="color:#a78bfa;font-size:18px;font-weight:700">AMIRA</span>
+        <span style="color:#34d399;font-size:18px;font-weight:700">· RAHMA</span>
+        <span style="color:#f472b6;font-size:18px;font-weight:700">· RAWAN</span>
+        <span style="color:var(--muted);font-size:12px;font-weight:400">— Manual Apply</span>
+      </div>
+      <div id="staffManualWrap" style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;padding:8px 0"></div>
+    </div>
+
+    <!-- Fatma - Job Entry -->
+    <div class="table-card">
+      <div class="table-title" style="display:flex;align-items:center;gap:10px">
+        <span style="color:#22d3ee;font-size:18px;font-weight:700">FATMA</span>
+        <span style="color:var(--muted);font-size:12px;font-weight:400">— Job Entry</span>
+      </div>
+      <div id="fatmaStatsWrap"></div>
+    </div>
+  </div>
+
   <div id="sec-analytics" class="section">
     <div class="chart-pair equal">
       <div class="chart-card">
@@ -726,6 +763,10 @@ tr:active td { background: var(--bg); }
     </svg>
     Manual
   </div>
+  <div class="bnav-item" data-sec="staff">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    Staff
+  </div>
   <div class="bnav-item" data-sec="analytics">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
       <line x1="18" y1="20" x2="18" y2="10"/>
@@ -755,8 +796,8 @@ function logout() {
 }
 
 let DATA = null, charts = {}, currentSection = 'overview';
-const SECTIONS = ['overview','clients','jobs','manual','analytics'];
-const TITLES   = { overview:'Overview', clients:'Clients', jobs:'Jobs', manual:'Manual Applications', analytics:'Analytics' };
+const SECTIONS = ['overview','clients','jobs','manual','staff','analytics'];
+const TITLES   = { overview:'Overview', clients:'Clients', jobs:'Jobs', manual:'Manual Applications', staff:'Staff Performance', analytics:'Analytics' };
 const SUBS     = {
   overview: 'Real-time workforce metrics',
   clients:  'Client management & search',
@@ -818,6 +859,7 @@ function render() {
   renderClientApps();
   renderEmployeeStats();
   renderManualClientCards();
+  renderStaffSection();
 
   renderLineChart('chartPerDay',  DATA.charts.perDay);
   renderDoughnut ('chartGender',  DATA.charts.byGender, GENDER_COLORS);
@@ -917,6 +959,51 @@ function renderSearchResults(rows) {
       <td data-label="Gender">${genderBadge(r.gender)}</td>
       <td data-label="Date">${fmtDate(r.date_in)}</td>
     </tr>`).join(''));
+}
+
+function staffStatCard(data, color, bg) {
+  return `
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:4px 0">
+    ${[['Today',data.today,color],['This Week',data.week,color],['This Month',data.month,color],['All Time',data.total,'var(--text)']].map(([lbl,val,c])=>`
+    <div style="background:${bg};border-radius:12px;padding:14px;text-align:center">
+      <div style="font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">${lbl}</div>
+      <div style="font-size:28px;font-weight:700;color:${c}">${val}</div>
+    </div>`).join('')}
+  </div>`;
+}
+
+function renderStaffSection() {
+  const staffMap  = Object.fromEntries((DATA.staffStats||[]).map(r=>[r.role,r]));
+  const empColors = { AMIRA:'#a78bfa', RAHMA:'#34d399', RAWAN:'#f472b6' };
+  const empBg     = { AMIRA:'#1e1040', RAHMA:'#052e16', RAWAN:'#3b0a2a' };
+
+  // Zainab
+  const z = staffMap['ZAINAB'] || {today:0,week:0,month:0,total:0};
+  set('zainabStatsWrap', staffStatCard(z,'#fbbf24','#1a1200'));
+
+  // Manual apply team
+  const empRows = DATA.employeeStats || [];
+  const empMap  = Object.fromEntries(empRows.map(r=>[r.name,r]));
+  set('staffManualWrap', ['AMIRA','RAHMA','RAWAN'].map(name => {
+    const r  = empMap[name] || {today:0,week:0,month:0,total:0};
+    const c  = empColors[name];
+    const bg = empBg[name];
+    return `
+    <div style="background:${bg};border:1.5px solid ${c}33;border-radius:16px;padding:18px">
+      <div style="font-size:15px;font-weight:700;color:${c};margin-bottom:12px">${name}</div>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">
+        ${[['Today',r.today,c],['Week',r.week,c],['Month',r.month,c],['Total',r.total,'var(--text)']].map(([lbl,val,tc])=>`
+        <div style="background:#ffffff0d;border-radius:8px;padding:8px;text-align:center">
+          <div style="font-size:9px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.3px">${lbl}</div>
+          <div style="font-size:20px;font-weight:700;color:${tc}">${val}</div>
+        </div>`).join('')}
+      </div>
+    </div>`;
+  }).join(''));
+
+  // Fatma
+  const f = staffMap['FATMA'] || {today:0,week:0,month:0,total:0};
+  set('fatmaStatsWrap', staffStatCard(f,'#22d3ee','#001820'));
 }
 
 function renderEmployeeStats() {
