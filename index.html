@@ -964,7 +964,7 @@ function renderSearchResults(rows) {
 function staffStatCard(data, color, bg) {
   return `
   <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:4px 0">
-    ${[['Today',data.today,color],['This Week',data.week,color],['This Month',data.month,color],['All Time',data.total,'var(--text)']].map(([lbl,val,c])=>`
+    ${[['Today',data.today,color],['This Week',data.week,color],['This Month',data.month,color],['All Time',data.total,color]].map(([lbl,val,c])=>`
     <div style="background:${bg};border-radius:12px;padding:14px;text-align:center">
       <div style="font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">${lbl}</div>
       <div style="font-size:28px;font-weight:700;color:${c}">${val}</div>
@@ -992,7 +992,7 @@ function renderStaffSection() {
     <div style="background:${bg};border:1.5px solid ${c}33;border-radius:16px;padding:18px">
       <div style="font-size:15px;font-weight:700;color:${c};margin-bottom:12px">${name}</div>
       <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">
-        ${[['Today',r.today,c],['Week',r.week,c],['Month',r.month,c],['Total',r.total,'var(--text)']].map(([lbl,val,tc])=>`
+        ${[['Today',r.today,c],['Week',r.week,c],['Month',r.month,c],['Total',r.total,c]].map(([lbl,val,tc])=>`
         <div style="background:#ffffff0d;border-radius:8px;padding:8px;text-align:center">
           <div style="font-size:9px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.3px">${lbl}</div>
           <div style="font-size:20px;font-weight:700;color:${tc}">${val}</div>
@@ -1038,7 +1038,7 @@ function renderEmployeeStats() {
         </div>
         <div style="background:#ffffff0d;border-radius:10px;padding:10px;text-align:center">
           <div style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px">All Time</div>
-          <div style="font-size:26px;font-weight:700;color:var(--text)">${r.total}</div>
+          <div style="font-size:26px;font-weight:700;color:${c}">${r.total}</div>
         </div>
       </div>
     </div>`;
