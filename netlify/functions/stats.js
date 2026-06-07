@@ -94,16 +94,21 @@ exports.handler = async (event) => {
 
       client.query(`
         SELECT c.id, c.name, c.email, c.nationality,
-               COALESCE(c.jobs_to_apply_number, 0)                         AS total_jobs,
-               COALESCE(c.manual_quota, 0)                                  AS manual_quota,
-               COUNT(ma.id)                                                 AS manual_count,
-               COUNT(r.id) FILTER (WHERE r.status = 'applied')             AS auto_count
+               COALESCE(c.jobs_to_apply_number, 0)  AS total_jobs,
+               COALESCE(c.manual_quota, 0)           AS manual_quota,
+               COALESCE(ma.cnt, 0)                   AS manual_count,
+               COALESCE(r.cnt, 0)                    AS auto_count
         FROM clients c
-        LEFT JOIN manual_applications ma ON ma.client_id = c.id
-        LEFT JOIN rankings r             ON r.client_id  = c.id::text
+        LEFT JOIN (
+          SELECT client_id, COUNT(*) AS cnt
+          FROM manual_applications GROUP BY client_id
+        ) ma ON ma.client_id = c.id
+        LEFT JOIN (
+          SELECT client_id, COUNT(*) AS cnt
+          FROM rankings WHERE status = 'applied' GROUP BY client_id
+        ) r ON r.client_id = c.id::text
         WHERE COALESCE(c.client_type, 'fresh') = 'fresh'
-        GROUP BY c.id, c.name, c.email, c.nationality, c.jobs_to_apply_number, c.manual_quota
-        ORDER BY (COALESCE(c.manual_quota,0) + COUNT(ma.id)) DESC
+        ORDER BY (COALESCE(c.manual_quota,0) + COALESCE(ma.cnt,0)) DESC
         LIMIT 100
       `),
 
