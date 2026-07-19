@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: tabashir-dashboard
+    env: node
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: JWT_SECRET
+        sync: false
+      - key: DASH_PASSWORD_HASH
+        sync: false
