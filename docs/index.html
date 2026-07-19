@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Tabashir Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f0f4f8;--surface:#fff;--sf2:#f7f8fa;--border:#e5e7eb;
+  --accent:#2563eb;--mint:#059669;--orange:#ea6800;--purple:#7c3aed;
+  --red:#dc2626;--muted:#6b7280;--text:#111827;
+}
+body{background:var(--bg);color:var(--text);font-family:'Cairo',sans-serif;min-height:100vh}
+.top-bar{background:linear-gradient(135deg,#1e40af,#2563eb);color:#fff;padding:16px 24px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.logo{font-size:24px;font-weight:900;letter-spacing:-.5px}
+.sub{font-size:13px;opacity:.8}
+.spacer{flex:1}
+.built-badge{background:rgba(255,255,255,.2);padding:5px 14px;border-radius:20px;font-size:12px}
+.page{padding:20px 24px;max-width:1200px;margin:0 auto}
+.section-title{font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:24px 0 12px}
+
+/* KPI Cards */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-top:16px}
+.kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px 14px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.kpi-label{font-size:11px;color:var(--muted);margin-bottom:6px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.kpi-value{font-size:38px;font-weight:900;line-height:1}
+
+/* Tables */
+.table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:24px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead tr{background:var(--sf2);border-bottom:1px solid var(--border)}
+th{padding:11px 14px;text-align:right;font-weight:700;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.04em}
+td{padding:11px 14px;border-bottom:1px solid var(--border)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#f9fafb}
+
+/* Bar chart */
+.bar-chart{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px;margin-bottom:24px}
+.bar-chart-title{font-size:13px;font-weight:700;margin-bottom:14px}
+.bars{display:flex;align-items:flex-end;gap:3px;height:80px}
+.bar{flex:1;min-width:4px;border-radius:4px 4px 0 0;background:var(--accent);opacity:.85;position:relative}
+.bar:hover{opacity:1}
+.bar-tip{display:none;position:absolute;bottom:calc(100% + 4px);left:50%;transform:translateX(-50%);background:#111827;color:#fff;font-size:10px;padding:2px 6px;border-radius:4px;white-space:nowrap;z-index:10}
+.bar:hover .bar-tip{display:block}
+.bar-labels{display:flex;justify-content:space-between;margin-top:4px;font-size:9px;color:var(--muted)}
+
+/* Donut-style pills */
+.pill-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:24px}
+.pill-item{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center}
+.pill-label{font-size:13px;font-weight:700}
+.pill-val{font-size:18px;font-weight:900;color:var(--accent)}
+
+/* Employee stat table badges */
+.badge{display:inline-block;padding:2px 10px;border-radius:20px;font-size:12px;font-weight:700}
+.b-green{background:#d1fae5;color:#065f46}
+.b-blue{background:#dbeafe;color:#1d4ed8}
+.b-orange{background:#ffedd5;color:#9a3412}
+
+@media(max-width:600px){
+  .page{padding:12px 14px}
+  .kpi-grid{grid-template-columns:1fr 1fr}
+  th,td{padding:8px 10px}
+}
+</style>
+</head>
+<body>
+<div class="top-bar">
+  <div>
+    <div class="logo">Tabashir</div>
+    <div class="sub">Dashboard</div>
+  </div>
+  <div class="spacer"></div>
+  <div class="built-badge">&#128197; 19 Jul 2026, 14:54</div>
+</div>
+
+<div class="page">
+
+<!-- Summary KPI -->
+<div class="section-title">إحصائيات عامة</div>
+<div class="kpi-grid" id="kpiGrid"></div>
+
+<!-- Staff performance -->
+<div class="section-title">أداء الموظفين — يدوي</div>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>الموظف</th><th>اليوم</th><th>الأسبوع</th><th>الشهر</th><th>الإجمالي</th></tr></thead>
+  <tbody id="empBody"></tbody>
+</table>
+</div>
+
+<!-- Staff (Zainab/Fatma) -->
+<div class="section-title">أداء الموظفين — بيانات</div>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>الدور</th><th>اليوم</th><th>الأسبوع</th><th>الشهر</th><th>الإجمالي</th></tr></thead>
+  <tbody id="staffBody"></tbody>
+</table>
+</div>
+
+<!-- Per day chart -->
+<div class="bar-chart">
+  <div class="bar-chart-title">عملاء جدد — آخر 30 يوم</div>
+  <div class="bars" id="barsEl"></div>
+  <div class="bar-labels" id="barLabels"></div>
+</div>
+
+<!-- By nationality -->
+<div class="section-title">الجنسيات</div>
+<div class="pill-grid" id="natGrid"></div>
+
+<!-- Latest clients -->
+<div class="section-title">آخر العملاء</div>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>#</th><th>الاسم</th><th>الجنسية</th><th>الجنس</th><th>تاريخ الانضمام</th></tr></thead>
+  <tbody id="clientBody"></tbody>
+</table>
+</div>
+
+<!-- Latest jobs -->
+<div class="section-title">آخر الوظائف</div>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>الوظيفة</th><th>الشركة</th><th>المصدر</th><th>التاريخ</th></tr></thead>
+  <tbody id="jobBody"></tbody>
+</table>
+</div>
+
+</div><!-- /page -->
+
+<script>
+const D = {"summary": {"totalClients": 730, "todayClients": 0, "weekClients": 20, "monthClients": 30, "totalJobs": 877, "totalManual": 2181, "manualToday": 4}, "charts": {"perDay": [{"day": "2026-06-20", "cnt": 2}, {"day": "2026-06-21", "cnt": 2}, {"day": "2026-06-22", "cnt": 9}, {"day": "2026-06-23", "cnt": 1}, {"day": "2026-06-26", "cnt": 2}, {"day": "2026-06-28", "cnt": 2}, {"day": "2026-06-29", "cnt": 4}, {"day": "2026-06-30", "cnt": 1}, {"day": "2026-07-02", "cnt": 1}, {"day": "2026-07-05", "cnt": 1}, {"day": "2026-07-06", "cnt": 3}, {"day": "2026-07-08", "cnt": 2}, {"day": "2026-07-09", "cnt": 2}, {"day": "2026-07-11", "cnt": 1}, {"day": "2026-07-13", "cnt": 13}, {"day": "2026-07-15", "cnt": 4}, {"day": "2026-07-16", "cnt": 2}, {"day": "2026-07-18", "cnt": 1}], "byGender": [{"label": "Female", "cnt": 421}, {"label": "Male", "cnt": 249}], "byNationality": [{"label": "Emirati", "cnt": 450}, {"label": "Sudanese", "cnt": 54}, {"label": "Jordanian", "cnt": 25}, {"label": "Egyptian", "cnt": 24}, {"label": "Syrian", "cnt": 17}, {"label": "Yemeni", "cnt": 12}, {"label": "Palestinian", "cnt": 11}, {"label": "Omani", "cnt": 9}, {"label": "Iraqi", "cnt": 6}, {"label": "Uae National", "cnt": 5}]}, "latestClients": [{"id": 1941, "name": "WADHA KHASIF OBAID AL-WAHSHI", "email": "Wadha.Khasif@Hotmail.Com", "nationality": "Emirati", "gender": "Female", "dateIn": "2026-07-18"}, {"id": 1939, "name": "Path to Peace", "email": "pathtopeace467@gmail.com", "nationality": "any", "gender": null, "dateIn": "2026-07-16"}, {"id": 1940, "name": "AHMAD ABDULLAH ABU GHOUSH", "email": "aabughoush94@gmail.com", "nationality": "Jordanian", "gender": "Male", "dateIn": "2026-07-16"}, {"id": 1931, "name": "Maria Smith", "email": "maria.smith80@mail.com", "nationality": "any", "gender": null, "dateIn": "2026-07-15"}, {"id": 1937, "name": "NASSER AHMED NASSER ALHALQABI", "email": "Nasser.7uae@gmail.com", "nationality": "Emirati", "gender": "Male", "dateIn": "2026-07-15"}, {"id": 1933, "name": "RASHED ALI HUSSEIN KAMAL", "email": "r.ali112@icloud.com", "nationality": "comorian", "gender": "male", "dateIn": "2026-07-15"}, {"id": 1932, "name": "HASAN KHALED ALSHEHHI", "email": "H.KHSHEHHI@gmail.com", "nationality": "Emirati", "gender": "Male", "dateIn": "2026-07-15"}, {"id": 1930, "name": "AMEERA KHALFAN SALEM ALKAABI", "email": "Ameera.k.Alkaabi@gmail.com", "nationality": "Emirati", "gender": "Female", "dateIn": "2026-07-13"}, {"id": 1929, "name": "MONA SAEED AL MAHROOQI .", "email": "mona.almahrooqii@gmail.com", "nationality": "Emirati", "gender": "Female", "dateIn": "2026-07-13"}, {"id": 1926, "name": "KALTHAM ALQUBAISI", "email": "kalthamalqubaisi18@gmail.com", "nationality": "Emirati", "gender": "Female", "dateIn": "2026-07-13"}, {"id": 1925, "name": "REEM ALKAABI", "email": "reemalk1000@gmail.com", "nationality": "Emirati", "gender": "Female", "dateIn": "2026-07-13"}, {"id": 1924, "name": "ROUDHA ABDALLAH ALALAWI", "email": "Roudaabdullah@hotmail.com", "nationality": "UAE National", "gender": "Female", "dateIn": "2026-07-13"}, {"id": 1923, "name": "GHANIM BAKHIT SAEED BINJARN", "email": "ghanim.binjarn@hotmail.com", "nationality": "Emirati", "gender": "Male", "dateIn": "2026-07-13"}, {"id": 1922, "name": "BADREYYA ALHEBSI", "email": "bmalhebsi@gmail.com", "nationality": "Emirati", "gender": "Female", "dateIn": "2026-07-13"}, {"id": 1921, "name": "Mohamed Mahfouz Mostafa Abdulaziz", "email": "mohamedmahfouzmostafa@gmail.com", "nationality": "Egyptian", "gender": "Male", "dateIn": "2026-07-13"}, {"id": 1920, "name": "AMAL ALI ALENEZI", "email": "amalaleneziqw79@gmail.com", "nationality": "Kuwait", "gender": "Female", "dateIn": "2026-07-13"}, {"id": 1919, "name": "MOHAMMED FAHAD AL-MAAMARI", "email": "mohammad4uae@gmail.com", "nationality": "Emirati", "gender": "Male", "dateIn": "2026-07-13"}, {"id": 1918, "name": "HAZZA NASER ABDULLA SALEH ALMANSOORI", "email": "Lsjpdg123445@gmail.com", "nationality": "Emirati", "gender": "Male", "dateIn": "2026-07-13"}, {"id": 1917, "name": "AFRA HAMAD ALI ALDARMAKI", "email": "al3fr-91@hotmail.com", "nationality": "Emirati", "gender": "Female", "dateIn": "2026-07-13"}, {"id": 1916, "name": "", "email": "hd.albulooshi@gmail.com", "nationality": "pk", "gender": "male", "dateIn": "2026-07-13"}, {"id": 1915, "name": "RANA YOSPH ALSALLOUM", "email": "r.salloum256@gmail.com|", "nationality": "Syrian", "gender": "Female", "dateIn": "2026-07-11"}, {"id": 1913, "name": "dimaalmazrouei12", "email": "dimaalmazrouei12@gmail.com", "nationality": "any", "gender": null, "dateIn": "2026-07-09"}, {"id": 1914, "name": "MOHAMMAD\nALHABIBI", "email": "alhabibi1996@gmail.com", "nationality": "Jordanian", "gender": "Male", "dateIn": "2026-07-09"}, {"id": 1912, "name": "Laila Abdulla saleh mohammed alameri", "email": "lailla.a5678@gmail.com", "nationality": "Emirati", "gender": "Female", "dateIn": "2026-07-08"}, {"id": 1911, "name": "REEM ALNUAIMI", "email": "reem_20010@outlook.sa", "nationality": "UAE National", "gender": "Female", "dateIn": "2026-07-08"}, {"id": 1903, "name": "Ahmed", "email": "ahmed.alahdly1@gmail.com", "nationality": "any", "gender": null, "dateIn": "2026-07-06"}, {"id": 1910, "name": "YOUSEF HINNO", "email": "yousefhinno@outlook.com", "nationality": "Jordanian", "gender": "Male", "dateIn": "2026-07-06"}, {"id": 1905, "name": "MOATASEM MOHAMMED ABDULLAH ALMADHAANI", "email": "Darknight255@yahoo.com", "nationality": "UAE National", "gender": "Male", "dateIn": "2026-07-06"}, {"id": 1904, "name": "TAMER ELFATIH ELTOUM ALI", "email": "t6666r@gmail.com", "nationality": "Sudanese", "gender": "Male", "dateIn": "2026-07-05"}, {"id": 1902, "name": "HIND MOHAMMED KHAMIS KHALFAN MUBARAK AL YAHYAI", "email": "hnootii2020@gmail.com", "nationality": "Emirati", "gender": "Female", "dateIn": "2026-07-02"}], "latestJobs": [{"id": 6857, "title": "Government (Municipal / Federal Ministries) - Speculative Application", "company": "Sharjah Electricity, Water & Gas Authority (SEWA)", "source": "speculative_outreach", "date": "2026-07-19"}, {"id": 6856, "title": "Government (Municipal / Federal Ministries) - Speculative Application", "company": "Ajman Municipality", "source": "speculative_outreach", "date": "2026-07-19"}, {"id": 6855, "title": "Automotive - Speculative Application", "company": "Dynatrade Automotive Group", "source": "speculative_outreach", "date": "2026-07-19"}, {"id": 6854, "title": "Automotive - Speculative Application", "company": "Premier Motors UAE", "source": "speculative_outreach", "date": "2026-07-19"}, {"id": 6853, "title": "Automotive - Speculative Application", "company": "Galadari Brothers Automotive", "source": "speculative_outreach", "date": "2026-07-19"}, {"id": 6852, "title": "Automotive - Speculative Application", "company": "Gargash Enterprises", "source": "speculative_outreach", "date": "2026-07-19"}, {"id": 6851, "title": "Automotive - Speculative Application", "company": "AGMC BMW UAE", "source": "speculative_outreach", "date": "2026-07-19"}, {"id": 6850, "title": "Fuel / Retail - Speculative Application", "company": "ENOC", "source": "speculative_outreach", "date": "2026-07-19"}, {"id": 6849, "title": "Construction / Contracting - Speculative Application", "company": "Dubai Contracting Company", "source": "speculative_outreach", "date": "2026-07-19"}, {"id": 6848, "title": "Construction / Contracting - Speculative Application", "company": "Ginco General Contracting", "source": "speculative_outreach", "date": "2026-07-19"}], "empStats": [{"name": "AMIRA", "today": 0, "week": 186, "month": 447, "total": 1190}, {"name": "RAHMA", "today": 0, "week": 129, "month": 315, "total": 632}, {"name": "RAWAN", "today": 4, "week": 98, "month": 202, "total": 347}], "staffStats": [{"role": "ZAINAB", "today": 0, "week": 20, "month": 30, "total": 730}, {"role": "FATMA", "today": 308, "week": 404, "month": 585, "total": 877}], "builtAt": "19 Jul 2026, 14:54"};
+const MAX_DAY = 13;
+
+// KPI cards
+const kpiData = [
+  {label:'إجمالي العملاء', val:D.summary.totalClients, color:'#2563eb'},
+  {label:'عملاء اليوم',    val:D.summary.todayClients, color:'#059669'},
+  {label:'عملاء الأسبوع',  val:D.summary.weekClients,  color:'#7c3aed'},
+  {label:'عملاء الشهر',   val:D.summary.monthClients,  color:'#ea6800'},
+  {label:'إجمالي الوظائف', val:D.summary.totalJobs,    color:'#dc2626'},
+  {label:'تقديمات يدوية',  val:D.summary.totalManual,   color:'#0891b2'},
+  {label:'يدوي اليوم',     val:D.summary.manualToday,   color:'#d97706'},
+];
+const kg = document.getElementById('kpiGrid');
+kpiData.forEach(k=>{
+  kg.innerHTML+=`<div class="kpi-card"><div class="kpi-label">${k.label}</div><div class="kpi-value" style="color:${k.color}">${k.val}</div></div>`;
+});
+
+// Employee stats
+const eb = document.getElementById('empBody');
+D.empStats.forEach(e=>{
+  eb.innerHTML+=`<tr>
+    <td><strong>${e.name}</strong></td>
+    <td><span class="badge b-green">${e.today}</span></td>
+    <td><span class="badge b-blue">${e.week}</span></td>
+    <td><span class="badge b-orange">${e.month}</span></td>
+    <td><strong>${e.total}</strong></td>
+  </tr>`;
+});
+
+// Staff stats
+const sb = document.getElementById('staffBody');
+D.staffStats.forEach(s=>{
+  sb.innerHTML+=`<tr>
+    <td><strong>${s.role}</strong></td>
+    <td><span class="badge b-green">${s.today}</span></td>
+    <td><span class="badge b-blue">${s.week}</span></td>
+    <td><span class="badge b-orange">${s.month}</span></td>
+    <td><strong>${s.total}</strong></td>
+  </tr>`;
+});
+
+// Bar chart
+const barsEl = document.getElementById('barsEl');
+const labelsEl = document.getElementById('barLabels');
+D.charts.perDay.forEach((d,i)=>{
+  const pct = MAX_DAY > 0 ? Math.max(4, Math.round(d.cnt/MAX_DAY*100)) : 4;
+  barsEl.innerHTML+=`<div class="bar" style="height:${pct}%"><div class="bar-tip">${d.day.slice(5)} (${d.cnt})</div></div>`;
+});
+if(D.charts.perDay.length>0){
+  const first = D.charts.perDay[0].day.slice(5);
+  const last  = D.charts.perDay[D.charts.perDay.length-1].day.slice(5);
+  labelsEl.innerHTML=`<span>${first}</span><span>${last}</span>`;
+}
+
+// Nationality pills
+const ng = document.getElementById('natGrid');
+D.charts.byNationality.forEach(n=>{
+  ng.innerHTML+=`<div class="pill-item"><div class="pill-label">${n.label}</div><div class="pill-val">${n.cnt}</div></div>`;
+});
+
+// Latest clients
+const cb = document.getElementById('clientBody');
+D.latestClients.forEach((c,i)=>{
+  cb.innerHTML+=`<tr>
+    <td style="color:var(--muted);font-size:11px">${i+1}</td>
+    <td><strong>${c.name}</strong></td>
+    <td>${c.nationality||'—'}</td>
+    <td>${c.gender||'—'}</td>
+    <td style="direction:ltr">${c.dateIn||'—'}</td>
+  </tr>`;
+});
+
+// Latest jobs
+const jb = document.getElementById('jobBody');
+D.latestJobs.forEach(j=>{
+  jb.innerHTML+=`<tr>
+    <td><strong>${j.title}</strong></td>
+    <td>${j.company||'—'}</td>
+    <td>${j.source||'—'}</td>
+    <td style="direction:ltr">${j.date||'—'}</td>
+  </tr>`;
+});
+</script>
+</body>
+</html>
