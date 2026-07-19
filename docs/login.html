@@ -1,0 +1,370 @@
+﻿<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<meta name="theme-color" content="#080b12"/>
+<title>Tabashir — Sign In</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-tap-highlight-color:transparent}
+
+:root{
+  --bg:       #080b12;
+  --panel:    #0c1019;
+  --surface:  #111827;
+  --surface2: #1a2235;
+  --border:   #1e2a3d;
+  --border-hi:#2d3f5c;
+  --accent:   #3b82f6;
+  --accent-dk:#2563eb;
+  --accent-bg:rgba(59,130,246,.06);
+  --text:     #f0f2f8;
+  --text-sec: #c9cfe0;
+  --sub:      #7d8baa;
+  --muted:    #475573;
+  --danger:   #ef4444;
+  --success:  #10b981;
+}
+
+body{
+  font-family:'Inter',system-ui,-apple-system,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100dvh;min-height:100vh;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+}
+
+.left{
+  background:var(--panel);
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;
+  justify-content:space-between;
+  padding:48px;
+  position:relative;
+  overflow:hidden;
+}
+.left::before{
+  content:'';position:absolute;
+  top:-40%;right:-30%;width:70%;height:70%;
+  background:radial-gradient(circle,rgba(59,130,246,.04) 0%,transparent 70%);
+  pointer-events:none;
+}
+
+.left-logo{display:flex;align-items:center;gap:14px;position:relative;z-index:1}
+.logo-mark{
+  width:42px;height:42px;border-radius:10px;
+  background:linear-gradient(135deg,var(--accent),var(--accent-dk));
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;box-shadow:0 4px 12px rgba(59,130,246,.25);
+}
+.logo-mark svg{width:20px;height:20px;color:#fff}
+.logo-name{font-size:19px;font-weight:700;color:var(--text);letter-spacing:-.2px}
+
+.left-body{flex:1;display:flex;flex-direction:column;justify-content:center;padding:40px 0;position:relative;z-index:1}
+.left-body h2{
+  font-size:36px;font-weight:800;line-height:1.2;
+  color:var(--text);margin-bottom:18px;letter-spacing:-.5px;
+}
+.left-body h2 span{
+  background:linear-gradient(135deg,var(--accent),#60a5fa);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+.left-body p{font-size:15px;color:var(--sub);line-height:1.75;max-width:340px}
+
+.stats-row{display:flex;gap:36px;margin-top:44px}
+.stat-item{position:relative;padding-left:16px}
+.stat-item::before{
+  content:'';position:absolute;left:0;top:4px;bottom:4px;
+  width:3px;border-radius:2px;
+  background:linear-gradient(180deg,var(--accent),rgba(59,130,246,.2));
+}
+.stat-num{font-size:28px;font-weight:800;color:var(--text);letter-spacing:-.5px}
+.stat-lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-top:4px;font-weight:600}
+
+.left-footer{font-size:11px;color:var(--muted);position:relative;z-index:1;letter-spacing:.2px}
+
+.right{
+  display:flex;align-items:center;justify-content:center;
+  padding:40px 32px;
+  background:var(--bg);
+}
+.form-wrap{width:100%;max-width:380px}
+
+.form-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:6px 14px;border-radius:20px;
+  background:var(--accent-bg);
+  border:1px solid rgba(59,130,246,.12);
+  font-size:11px;color:var(--accent);font-weight:600;
+  letter-spacing:.3px;text-transform:uppercase;
+  margin-bottom:24px;
+}
+.form-badge-dot{width:6px;height:6px;border-radius:50%;background:var(--accent)}
+
+.form-title{font-size:26px;font-weight:800;color:var(--text);margin-bottom:8px;letter-spacing:-.4px}
+.form-sub{font-size:14px;color:var(--sub);margin-bottom:36px;line-height:1.6}
+
+.err-box{
+  display:flex;align-items:flex-start;gap:10px;
+  background:rgba(239,68,68,.06);
+  border:1px solid rgba(239,68,68,.15);
+  border-radius:10px;padding:12px 14px;
+  color:var(--danger);font-size:13px;
+  margin-bottom:20px;line-height:1.5;
+  visibility:hidden;
+}
+.err-box.show{visibility:visible}
+.err-box svg{width:15px;height:15px;flex-shrink:0;margin-top:1px}
+
+.field{margin-bottom:22px}
+.field label{
+  display:block;font-size:12px;font-weight:600;
+  color:var(--sub);
+  letter-spacing:.3px;margin-bottom:8px;
+}
+.field-inner{position:relative}
+.field-inner input{
+  width:100%;
+  padding:14px 46px 14px 16px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:10px;
+  color:var(--text);font-size:15px;font-family:inherit;
+  outline:none;
+  transition:border-color .18s,box-shadow .18s;
+}
+.field-inner input::placeholder{color:var(--muted)}
+.field-inner input:focus{
+  border-color:var(--accent);
+  box-shadow:0 0 0 3px rgba(59,130,246,.1);
+}
+.field-inner input.err-input{
+  border-color:rgba(239,68,68,.4);
+}
+.eye{
+  position:absolute;right:14px;top:50%;transform:translateY(-50%);
+  cursor:pointer;color:var(--muted);
+  display:flex;align-items:center;justify-content:center;
+  transition:color .15s;
+}
+.eye:hover{color:var(--sub)}
+.eye svg{width:17px;height:17px;pointer-events:none}
+
+.btn{
+  width:100%;padding:14px;
+  background:linear-gradient(135deg,var(--accent),var(--accent-dk));
+  border:none;border-radius:10px;
+  color:#fff;font-size:14px;font-weight:600;font-family:inherit;
+  cursor:pointer;letter-spacing:.2px;
+  transition:box-shadow .18s,transform .1s,opacity .18s;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  box-shadow:0 2px 12px rgba(59,130,246,.25);
+}
+.btn:hover:not(:disabled){box-shadow:0 6px 24px rgba(59,130,246,.35)}
+.btn:active:not(:disabled){transform:scale(.985)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn.success{background:linear-gradient(135deg,var(--success),#059669)}
+
+.ring{
+  width:15px;height:15px;
+  border:2px solid rgba(255,255,255,.3);
+  border-top-color:#fff;border-radius:50%;
+  animation:spin .65s linear infinite;display:none;
+}
+.ring.show{display:block}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.divider{
+  display:flex;align-items:center;gap:12px;
+  margin:28px 0;color:var(--muted);font-size:11px;font-weight:500;
+  letter-spacing:.3px;text-transform:uppercase;
+}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border)}
+
+.badge-row{display:flex;gap:8px;flex-wrap:wrap}
+.badge{
+  display:flex;align-items:center;gap:6px;
+  padding:7px 14px;border-radius:8px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  font-size:11px;color:var(--sub);font-weight:500;
+}
+.badge-dot{width:6px;height:6px;border-radius:50%;background:var(--success);flex-shrink:0}
+
+@media(max-width:700px){
+  body{grid-template-columns:1fr}
+  .left{display:none}
+  .right{padding:32px 20px}
+}
+</style>
+</head>
+<body>
+
+<div class="left">
+  <div class="left-logo">
+    <div class="logo-mark">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+        <line x1="18" y1="20" x2="18" y2="10"/>
+        <line x1="12" y1="20" x2="12" y2="4"/>
+        <line x1="6"  y1="20" x2="6"  y2="14"/>
+      </svg>
+    </div>
+    <span class="logo-name">Tabashir</span>
+  </div>
+
+  <div class="left-body">
+    <h2>Workforce<br>Management<br><span>Platform</span></h2>
+    <p>A centralized command center for client registrations, job listings, and workforce analytics.</p>
+    <div class="stats-row">
+      <div class="stat-item">
+        <div class="stat-num">600+</div>
+        <div class="stat-lbl">Clients</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">8,000+</div>
+        <div class="stat-lbl">Jobs</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">Live</div>
+        <div class="stat-lbl">Data</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="left-footer">Tabashir &copy; 2026 &mdash; Authorized personnel only</div>
+</div>
+
+<div class="right">
+  <div class="form-wrap">
+
+    <div class="form-badge"><span class="form-badge-dot"></span>Secure Portal</div>
+    <div class="form-title">Welcome back</div>
+    <div class="form-sub">Enter your credentials to access the management dashboard.</div>
+
+    <div class="err-box" id="errBox">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="12" y1="8" x2="12" y2="12"/>
+        <line x1="12" y1="16" x2="12.01" y2="16"/>
+      </svg>
+      <span id="errTxt"></span>
+    </div>
+
+    <div class="field">
+      <label for="pwd">Password</label>
+      <div class="field-inner">
+        <input id="pwd" type="password" placeholder="Enter your password"
+               autocomplete="current-password" spellcheck="false" autofocus/>
+        <span class="eye" id="eyeBtn">
+          <svg id="eyeIco" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+        </span>
+      </div>
+    </div>
+
+    <button class="btn" id="btn" onclick="doLogin()">
+      <div class="ring" id="ring"></div>
+      <span id="btnLbl">Sign In</span>
+    </button>
+
+    <div class="divider">Secure access</div>
+
+    <div class="badge-row">
+      <div class="badge"><span class="badge-dot"></span>256-bit encrypted</div>
+      <div class="badge"><span class="badge-dot"></span>Session protected</div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const eyeSVG = {
+  show:`<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>`,
+  hide:`<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>`,
+};
+document.getElementById('eyeBtn').addEventListener('click', () => {
+  const inp  = document.getElementById('pwd');
+  const show = inp.type === 'password';
+  inp.type   = show ? 'text' : 'password';
+  document.getElementById('eyeIco').innerHTML = show ? eyeSVG.hide : eyeSVG.show;
+});
+
+document.getElementById('pwd').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doLogin();
+});
+
+(function(){
+  const t = localStorage.getItem('dash_token');
+  const e = parseInt(localStorage.getItem('dash_exp')||'0', 10);
+  if (t && Date.now() < e) window.location.replace('./index.html');
+})();
+
+const PWD_HASH = '11bb790d634e8e4a7ca3849c7e255a37a0b1ce4ea153f0f6f8f576314b7a0a5a';
+
+async function doLogin() {
+  const pwd  = document.getElementById('pwd').value;
+  const btn  = document.getElementById('btn');
+  const ring = document.getElementById('ring');
+  const lbl  = document.getElementById('btnLbl');
+
+  if (!pwd) { showErr('Please enter your password.'); return; }
+
+  btn.disabled = true;
+  ring.classList.add('show');
+  lbl.textContent = 'Verifying…';
+  hideErr();
+
+  try {
+    const enc    = new TextEncoder();
+    const buf    = await crypto.subtle.digest('SHA-256', enc.encode(pwd));
+    const hex    = Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+
+    if (hex !== PWD_HASH) {
+      document.getElementById('pwd').value = '';
+      document.getElementById('pwd').classList.add('err-input');
+      showErr('Incorrect password. Please try again.');
+      document.getElementById('pwd').focus();
+      btn.disabled = false;
+      ring.classList.remove('show');
+      lbl.textContent = 'Sign In';
+      return;
+    }
+
+    localStorage.setItem('dash_token', 'static_auth');
+    localStorage.setItem('dash_exp',   Date.now() + 10 * 60 * 60 * 1000);
+
+    ring.classList.remove('show');
+    btn.classList.add('success');
+    lbl.textContent = 'Access granted';
+    setTimeout(() => window.location.replace('./index.html'), 550);
+
+  } catch(e) {
+    showErr('Error: ' + e.message);
+    btn.disabled = false;
+    ring.classList.remove('show');
+    lbl.textContent = 'Sign In';
+  }
+}
+
+function showErr(msg) {
+  document.getElementById('errTxt').textContent = msg;
+  document.getElementById('errBox').classList.add('show');
+  document.getElementById('pwd').classList.add('err-input');
+}
+function hideErr() {
+  document.getElementById('errBox').classList.remove('show');
+  document.getElementById('pwd').classList.remove('err-input');
+}
+</script>
+</body>
+</html>
